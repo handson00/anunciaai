@@ -74,6 +74,7 @@ export type Database = {
       community_groups: {
         Row: {
           active: boolean
+          category: string | null
           created_at: string
           id: string
           name: string
@@ -81,6 +82,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          category?: string | null
           created_at?: string
           id?: string
           name: string
@@ -88,6 +90,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          category?: string | null
           created_at?: string
           id?: string
           name?: string
