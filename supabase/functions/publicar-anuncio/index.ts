@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       try {
         console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
         
-        // Check if main_photo is a base64 data URI - if so, send text only since base64 is too large
+        // Check if main_photo is a base64 data URI - if so, send text only
         const isBase64 = ad.main_photo.startsWith('data:');
         
         let response;
@@ -140,19 +140,9 @@ Deno.serve(async (req) => {
             }),
           });
         }
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            number: group.whatsapp_group_id,
-            media: ad.main_photo,
-            caption: caption,
-            type: 'image',
-          }),
-        });
 
         const result = await response.json();
+        console.log(`Response for ${group.name}:`, JSON.stringify(result).substring(0, 200));
 
         // Log
         await supabase.from('publication_logs').insert({
@@ -164,6 +154,7 @@ Deno.serve(async (req) => {
 
         if (!response.ok) allSuccess = false;
       } catch (err: any) {
+        console.error(`Error sending to ${group.name}:`, err.message);
         await supabase.from('publication_logs').insert({
           ad_id: anuncio_id,
           group_id: group.id,
