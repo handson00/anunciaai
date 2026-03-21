@@ -585,6 +585,23 @@ export default function AdminPage() {
               </Button>
             </div>
 
+            {/* Webhook n8n */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Webhook (n8n / Automação)</h3>
+              <p className="text-xs text-muted-foreground">
+                Cole a URL do webhook para receber os dados completos do anúncio automaticamente ao publicar.
+              </p>
+              <Input
+                value={webhookUrl}
+                onChange={e => setWebhookUrl(e.target.value)}
+                placeholder="https://seu-n8n.com/webhook/..."
+                className="h-11 rounded-xl"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                📦 Dados enviados: título, descrição, preço, categoria, fotos, contato, região, link do anúncio e dados do anunciante.
+              </p>
+            </div>
+
             {/* Connection Status */}
             <div className="bg-card border rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
