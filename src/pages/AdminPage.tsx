@@ -60,6 +60,7 @@ export default function AdminPage() {
       for (const s of data) {
         if (s.key === 'uazapi_server_url') { setSettingsUrl(s.value); hasUrl = true; }
         if (s.key === 'uazapi_instance_token') { setSettingsToken(s.value); hasToken = true; }
+        if (s.key === 'webhook_url') setWebhookUrl(s.value);
       }
     }
     if (hasUrl && hasToken) {
