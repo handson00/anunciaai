@@ -39,12 +39,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'UazAPI não configurada' }), { status: 500, headers: corsHeaders });
     }
 
-    // Fetch groups from UazAPI
-    const response = await fetch(`${uazapiUrl}/getGroups`, {
+    // Fetch groups from UazAPI - uses query string auth
+    const response = await fetch(`${uazapiUrl}/group/list?token=${uazapiToken}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${uazapiToken}`,
       },
     });
 
