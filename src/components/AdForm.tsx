@@ -262,7 +262,7 @@ export function AdForm({ category, onBack }: Props) {
       {/* Region */}
       <div>
         <label className="text-sm font-medium text-foreground mb-1.5 block">
-          Região / Bairro
+          Cidade
         </label>
         <Input
           value={region}
