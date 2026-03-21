@@ -62,6 +62,25 @@ export default function AdminPage() {
     }
   };
 
+  const testConnection = async () => {
+    setConnectionStatus('testing');
+    setConnectionInfo('Testando conexão...');
+    try {
+      const { data, error } = await supabase.functions.invoke('listar-grupos-whatsapp');
+      if (error || data?.error) {
+        setConnectionStatus('error');
+        setConnectionInfo(data?.error || error?.message || 'Falha na conexão');
+        return;
+      }
+      const count = data?.groups?.length || 0;
+      setConnectionStatus('connected');
+      setConnectionInfo(`Conectado · ${count} grupo(s) encontrado(s)`);
+    } catch {
+      setConnectionStatus('error');
+      setConnectionInfo('Não foi possível conectar à API');
+    }
+  };
+
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     try {
@@ -78,6 +97,8 @@ export default function AdminPage() {
         }
       }
       toast.success('Configurações salvas');
+      // Auto-test connection after saving
+      await testConnection();
     } catch {
       toast.error('Erro ao salvar configurações');
     } finally {
