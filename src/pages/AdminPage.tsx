@@ -511,6 +511,57 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {tab === 'settings' && (
+          <div className="space-y-4">
+            <div className="bg-card border rounded-xl p-4 space-y-4">
+              <h3 className="font-semibold text-foreground text-sm">Configuração UazAPI</h3>
+              <p className="text-xs text-muted-foreground">Configure a URL e o token da sua instância UazAPI para integração com WhatsApp.</p>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">URL do servidor</label>
+                <Input
+                  value={settingsUrl}
+                  onChange={e => setSettingsUrl(e.target.value)}
+                  placeholder="https://sua-instancia.uazapi.com"
+                  className="h-11 rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">Token da instância</label>
+                <div className="relative">
+                  <Input
+                    value={settingsToken}
+                    onChange={e => setSettingsToken(e.target.value)}
+                    placeholder="Seu token de autenticação"
+                    type={showToken ? 'text' : 'password'}
+                    className="h-11 rounded-xl pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowToken(!showToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button variant="cta" className="w-full" onClick={handleSaveSettings} disabled={savingSettings}>
+                <Save className="w-4 h-4" />
+                {savingSettings ? 'Salvando...' : 'Salvar configurações'}
+              </Button>
+            </div>
+
+            <div className="bg-secondary/50 border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground">
+                💡 As configurações salvas aqui têm prioridade sobre as variáveis de ambiente do servidor. 
+                Deixe os campos vazios para usar as variáveis de ambiente padrão.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
