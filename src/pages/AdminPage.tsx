@@ -92,9 +92,11 @@ export default function AdminPage() {
     await supabase.from('community_groups').insert({
       name: newGroupName.trim(),
       whatsapp_group_id: newGroupId.trim(),
+      category: newGroupCategory.trim() || null,
     });
     setNewGroupName('');
     setNewGroupId('');
+    setNewGroupCategory('');
     loadGroups();
     toast.success('Grupo adicionado');
   };
@@ -110,6 +112,28 @@ export default function AdminPage() {
       loadGroups();
       toast.success('Grupo removido');
     }
+  };
+
+  const handleStartEdit = (group: CommunityGroup) => {
+    setEditingGroup(group);
+    setEditName(group.name);
+    setEditWhatsappId(group.whatsapp_group_id);
+    setEditCategory(group.category || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingGroup || !editName.trim() || !editWhatsappId.trim()) {
+      toast.error('Preencha nome e ID do grupo');
+      return;
+    }
+    await supabase.from('community_groups').update({
+      name: editName.trim(),
+      whatsapp_group_id: editWhatsappId.trim(),
+      category: editCategory.trim() || null,
+    }).eq('id', editingGroup.id);
+    setEditingGroup(null);
+    loadGroups();
+    toast.success('Grupo atualizado');
   };
 
   return (
