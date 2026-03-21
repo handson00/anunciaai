@@ -41,7 +41,7 @@ export function Dashboard() {
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="anunciaAI" className="w-8 h-8" />
+            <img src={logo} alt="anunciaAI" className="w-10 h-10" />
             <h1 className="text-lg font-bold">
               <span className="text-cta">anunci</span>AI
             </h1>
