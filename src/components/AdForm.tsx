@@ -267,7 +267,7 @@ export function AdForm({ category, onBack }: Props) {
         <Input
           value={region}
           onChange={e => setRegion(e.target.value)}
-          placeholder="Ex: Centro, Bairro X..."
+          placeholder="Ex: São Paulo, Curitiba..."
           className="h-12 rounded-xl"
         />
       </div>
