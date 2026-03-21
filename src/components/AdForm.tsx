@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdCategory, useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,7 +41,8 @@ export function AdForm({ category, onBack }: Props) {
   const [contactPhone, setContactPhone] = useState(
     currentUser ? formatPhone(currentUser.phone) : ''
   );
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const showCondition = category === 'automobile' || category === 'product';
@@ -50,48 +52,73 @@ export function AdForm({ category, onBack }: Props) {
     const files = e.target.files;
     if (!files) return;
     Array.from(files).forEach(file => {
+      setPhotoFiles(prev => [...prev, file]);
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setPhotos(prev => [...prev, ev.target?.result as string]);
+        setPhotoPreviews(prev => [...prev, ev.target?.result as string]);
       };
       reader.readAsDataURL(file);
     });
   };
 
   const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoFiles(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadPhotos = async (): Promise<string[]> => {
+    if (!currentUser) return [];
+    const urls: string[] = [];
+    for (const file of photoFiles) {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${currentUser.user_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from('ad-photos').upload(path, file);
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+      const { data: urlData } = supabase.storage.from('ad-photos').getPublicUrl(path);
+      urls.push(urlData.publicUrl);
+    }
+    return urls;
   };
 
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
     if (!price.trim()) { toast.error('Digite o valor'); return; }
-    if (photos.length === 0) { toast.error('Adicione pelo menos uma foto'); return; }
+    if (photoPreviews.length === 0) { toast.error('Adicione pelo menos uma foto'); return; }
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
     if (showCondition && !condition) { toast.error('Selecione a condição'); return; }
 
     const priceNum = parseFloat(price.replace(/\D/g, '')) / 100;
 
     setSubmitting(true);
-    const ad = await createAd({
-      category,
-      title: title.trim(),
-      description: description.trim(),
-      price: priceNum,
-      condition: condition || undefined,
-      brand: brand.trim() || undefined,
-      region: region.trim() || undefined,
-      main_photo: photos[0],
-      photos: photos.slice(1),
-      contact_phone: contactPhone.replace(/\D/g, ''),
-    });
-    setSubmitting(false);
+    try {
+      const uploadedUrls = await uploadPhotos();
+      const ad = await createAd({
+        category,
+        title: title.trim(),
+        description: description.trim(),
+        price: priceNum,
+        condition: condition || undefined,
+        brand: brand.trim() || undefined,
+        region: region.trim() || undefined,
+        main_photo: uploadedUrls[0],
+        photos: uploadedUrls.slice(1),
+        contact_phone: contactPhone.replace(/\D/g, ''),
+      });
+      setSubmitting(false);
 
-    if (ad) {
-      toast.success('Anúncio criado com sucesso!');
-      navigate(`/ad/${ad.slug}`);
-    } else {
-      toast.error('Erro ao criar anúncio');
+      if (ad) {
+        toast.success('Anúncio criado com sucesso!');
+        navigate(`/ad/${ad.slug}`);
+      } else {
+        toast.error('Erro ao criar anúncio');
+      }
+    } catch {
+      setSubmitting(false);
+      toast.error('Erro ao enviar fotos');
     }
   };
 
@@ -117,7 +144,7 @@ export function AdForm({ category, onBack }: Props) {
           Fotos <span className="text-destructive">*</span>
         </label>
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {photos.map((photo, i) => (
+          {photoPreviews.map((photo, i) => (
             <div key={i} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
               <img src={photo} alt="" className="w-full h-full object-cover" />
               <button
