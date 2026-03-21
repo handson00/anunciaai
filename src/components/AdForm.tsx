@@ -144,7 +144,7 @@ export function AdForm({ category, onBack }: Props) {
           Fotos <span className="text-destructive">*</span>
         </label>
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {photos.map((photo, i) => (
+          {photoPreviews.map((photo, i) => (
             <div key={i} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
               <img src={photo} alt="" className="w-full h-full object-cover" />
               <button
