@@ -82,9 +82,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
       .single();
     if (data) {
-      setCurrentUser(data as Profile);
+      setCurrentUser(data as unknown as Profile);
     }
-    return data as Profile | null;
+    return data as unknown as Profile | null;
   }, []);
 
   useEffect(() => {
