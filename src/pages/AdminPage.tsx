@@ -110,8 +110,8 @@ export default function AdminPage() {
 
   const handleImportGroup = async (waGroup: any) => {
     const existingIds = groups.map(g => g.whatsapp_group_id);
-    const groupId = waGroup.id || waGroup.jid || waGroup.groupId;
-    const groupName = waGroup.subject || waGroup.name || 'Grupo';
+    const groupId = waGroup.JID || waGroup.id || waGroup.jid || waGroup.groupId;
+    const groupName = waGroup.Name || waGroup.subject || waGroup.name || 'Grupo';
     
     if (existingIds.includes(groupId)) {
       toast.info('Grupo já cadastrado');
@@ -367,8 +367,8 @@ export default function AdminPage() {
               {whatsappGroups.length > 0 && (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {whatsappGroups.map((wg: any, idx: number) => {
-                    const groupId = wg.id || wg.jid || wg.groupId || '';
-                    const groupName = wg.subject || wg.name || 'Grupo';
+                    const groupId = wg.JID || wg.id || wg.jid || wg.groupId || '';
+                    const groupName = wg.Name || wg.subject || wg.name || 'Grupo';
                     const isImported = groups.some(g => g.whatsapp_group_id === groupId);
                     return (
                       <div key={groupId || idx} className="flex items-center gap-3 bg-secondary/50 rounded-lg p-3">
