@@ -582,6 +582,46 @@ export default function AdminPage() {
               </Button>
             </div>
 
+            {/* Connection Status */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm">Status da Conexão</h3>
+                <Button variant="outline" size="sm" onClick={testConnection} disabled={connectionStatus === 'testing'}>
+                  <RefreshCw className={`w-4 h-4 ${connectionStatus === 'testing' ? 'animate-spin' : ''}`} />
+                  Testar
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-3 bg-secondary/50 rounded-lg p-3">
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                  connectionStatus === 'connected' ? 'bg-green-500' :
+                  connectionStatus === 'error' ? 'bg-destructive' :
+                  connectionStatus === 'testing' ? 'bg-yellow-500 animate-pulse' :
+                  'bg-muted-foreground/30'
+                }`} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-foreground text-sm">UazAPI</p>
+                  <p className="text-xs text-muted-foreground">
+                    {connectionStatus === 'idle' && 'Salve as configurações para testar'}
+                    {connectionStatus === 'testing' && 'Testando conexão...'}
+                    {connectionStatus === 'connected' && connectionInfo}
+                    {connectionStatus === 'error' && connectionInfo}
+                  </p>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                  connectionStatus === 'connected' ? 'bg-green-500/10 text-green-600' :
+                  connectionStatus === 'error' ? 'bg-destructive/10 text-destructive' :
+                  connectionStatus === 'testing' ? 'bg-yellow-500/10 text-yellow-600' :
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {connectionStatus === 'connected' ? 'Conectado' :
+                   connectionStatus === 'error' ? 'Erro' :
+                   connectionStatus === 'testing' ? 'Testando' :
+                   'Aguardando'}
+                </span>
+              </div>
+            </div>
+
             <div className="bg-secondary/50 border rounded-xl p-4">
               <p className="text-xs text-muted-foreground">
                 💡 As configurações salvas aqui têm prioridade sobre as variáveis de ambiente do servidor. 
