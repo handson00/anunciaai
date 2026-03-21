@@ -168,8 +168,9 @@ Deno.serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               number: group.whatsapp_group_id,
+              mediaType: 'image',
               file: photoUrl,
-              caption: caption,
+              caption,
             }),
           });
         }
