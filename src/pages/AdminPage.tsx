@@ -312,37 +312,77 @@ export default function AdminPage() {
 
         {tab === 'groups' && (
           <div className="space-y-4">
+            {/* Edit modal */}
+            {editingGroup && (
+              <div className="bg-card border-2 border-primary rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground text-sm">Editar grupo</h3>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingGroup(null)}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input value={editName} onChange={e => setEditName(e.target.value)}
+                  placeholder="Nome do grupo" className="h-11 rounded-xl" />
+                <Input value={editWhatsappId} onChange={e => setEditWhatsappId(e.target.value)}
+                  placeholder="ID do grupo no WhatsApp" className="h-11 rounded-xl" />
+                <Input value={editCategory} onChange={e => setEditCategory(e.target.value)}
+                  placeholder="Categoria (opcional, ex: vendas, geral)" className="h-11 rounded-xl" />
+                <Button variant="cta" size="sm" className="w-full" onClick={handleSaveEdit}>
+                  <Save className="w-4 h-4" /> Salvar alterações
+                </Button>
+              </div>
+            )}
+
             {/* Add group form */}
-            <div className="bg-card border rounded-xl p-4 space-y-3">
-              <h3 className="font-semibold text-foreground text-sm">Adicionar grupo</h3>
-              <Input value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
-                placeholder="Nome do grupo" className="h-11 rounded-xl" />
-              <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
-                placeholder="ID do grupo no WhatsApp (ex: 120363...@g.us)" className="h-11 rounded-xl" />
-              <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
-                <Plus className="w-4 h-4" /> Adicionar grupo
-              </Button>
-            </div>
+            {!editingGroup && (
+              <div className="bg-card border rounded-xl p-4 space-y-3">
+                <h3 className="font-semibold text-foreground text-sm">Adicionar grupo</h3>
+                <Input value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
+                  placeholder="Nome do grupo" className="h-11 rounded-xl" />
+                <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
+                  placeholder="ID do grupo no WhatsApp (ex: 120363...@g.us)" className="h-11 rounded-xl" />
+                <Input value={newGroupCategory} onChange={e => setNewGroupCategory(e.target.value)}
+                  placeholder="Categoria (opcional, ex: vendas, geral)" className="h-11 rounded-xl" />
+                <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
+                  <Plus className="w-4 h-4" /> Adicionar grupo
+                </Button>
+              </div>
+            )}
 
             {/* Group list */}
             <div className="space-y-2">
               {groups.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4 text-sm">Nenhum grupo cadastrado</p>
               ) : groups.map(group => (
-                <div key={group.id} className="bg-card border rounded-xl p-4 flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground text-sm">{group.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{group.whatsapp_group_id}</p>
+                <div key={group.id} className="bg-card border rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground text-sm">{group.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{group.whatsapp_group_id}</p>
+                      {group.category && (
+                        <span className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full mt-1 inline-block">
+                          {group.category}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(group)}>
+                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                        onClick={() => handleToggleGroup(group.id, group.active)}>
+                        {group.active ? <Ban className="w-4 h-4 text-muted-foreground" /> : <CheckCircle className="w-4 h-4 text-cta" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteGroup(group.id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8"
-                      onClick={() => handleToggleGroup(group.id, group.active)}>
-                      {group.active ? <Ban className="w-4 h-4 text-muted-foreground" /> : <CheckCircle className="w-4 h-4 text-cta" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteGroup(group.id)}>
-                      <X className="w-4 h-4 text-destructive" />
-                    </Button>
+                  <div className="flex items-center gap-2 pl-6">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${group.active ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      {group.active ? 'Ativo' : 'Inativo'}
+                    </span>
                   </div>
                 </div>
               ))}
