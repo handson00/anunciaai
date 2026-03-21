@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'connected' | 'error'>('idle');
   const [connectionInfo, setConnectionInfo] = useState<string>('');
+  const [webhookUrl, setWebhookUrl] = useState('');
 
   useEffect(() => {
     if (currentUser?.is_admin) {
