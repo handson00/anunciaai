@@ -32,11 +32,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Sem permissão' }), { status: 403, headers: corsHeaders });
     }
 
-    const uazapiUrl = Deno.env.get('UAZAPI_SERVER_URL');
-    const uazapiToken = Deno.env.get('UAZAPI_INSTANCE_TOKEN');
+    // Read UazAPI config from app_settings (priority) or env vars (fallback)
+    const { data: settings } = await serviceClient.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    const settingsMap: Record<string, string> = {};
+    if (settings) for (const s of settings) settingsMap[s.key] = s.value;
+
+    const uazapiUrl = settingsMap['uazapi_server_url'] || Deno.env.get('UAZAPI_SERVER_URL');
+    const uazapiToken = settingsMap['uazapi_instance_token'] || Deno.env.get('UAZAPI_INSTANCE_TOKEN');
 
     if (!uazapiUrl || !uazapiToken) {
-      return new Response(JSON.stringify({ error: 'UazAPI não configurada' }), { status: 500, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'UazAPI não configurada. Configure na aba Config do painel admin.' }), { status: 500, headers: corsHeaders });
     }
 
     // Fetch groups from UazAPI - uses query string auth
