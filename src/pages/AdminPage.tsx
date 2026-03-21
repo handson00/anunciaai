@@ -16,6 +16,7 @@ interface CommunityGroup {
   name: string;
   whatsapp_group_id: string;
   active: boolean;
+  category: string | null;
 }
 
 export default function AdminPage() {
@@ -28,6 +29,11 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupId, setNewGroupId] = useState('');
+  const [newGroupCategory, setNewGroupCategory] = useState('');
+  const [editingGroup, setEditingGroup] = useState<CommunityGroup | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editWhatsappId, setEditWhatsappId] = useState('');
+  const [editCategory, setEditCategory] = useState('');
 
   useEffect(() => {
     if (currentUser?.is_admin) {
