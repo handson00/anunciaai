@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { WelcomeModal } from '@/components/WelcomeModal';
+import logo from '@/assets/logo.png';
 
 export default function Index() {
   const { currentUser, loading } = useApp();
