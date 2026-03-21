@@ -94,6 +94,7 @@ export default function AdminPage() {
       for (const { key, value } of [
         { key: 'uazapi_server_url', value: settingsUrl.trim() },
         { key: 'uazapi_instance_token', value: settingsToken.trim() },
+        { key: 'webhook_url', value: webhookUrl.trim() },
       ]) {
         if (!value) continue;
         const { data: existing } = await supabase.from('app_settings').select('id').eq('key', key).single();
