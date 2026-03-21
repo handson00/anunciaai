@@ -108,9 +108,18 @@ Deno.serve(async (req) => {
     }
 
     let allSuccess = true;
+    console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}`);
 
     for (const group of groups) {
       try {
+        console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
+        const sendBody = {
+          number: group.whatsapp_group_id,
+          media: ad.main_photo.startsWith('data:') ? ad.main_photo : ad.main_photo,
+          caption: caption,
+          type: 'image',
+        };
+        console.log('Send body keys:', Object.keys(sendBody), 'media length:', ad.main_photo.length);
         const response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
           method: 'POST',
           headers: {
