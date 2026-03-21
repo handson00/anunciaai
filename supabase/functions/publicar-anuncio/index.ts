@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
               number: group.whatsapp_group_id,
               type: 'image',
               file: photoUrl,
-              caption,
+              text: caption,
             }),
           });
         }
