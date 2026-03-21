@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'connected' | 'error'>('idle');
   const [connectionInfo, setConnectionInfo] = useState<string>('');
+  const [webhookUrl, setWebhookUrl] = useState('');
 
   useEffect(() => {
     if (currentUser?.is_admin) {
@@ -53,12 +54,13 @@ export default function AdminPage() {
   }, [currentUser]);
 
   const loadSettings = async () => {
-    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url']);
     let hasUrl = false, hasToken = false;
     if (data) {
       for (const s of data) {
         if (s.key === 'uazapi_server_url') { setSettingsUrl(s.value); hasUrl = true; }
         if (s.key === 'uazapi_instance_token') { setSettingsToken(s.value); hasToken = true; }
+        if (s.key === 'webhook_url') setWebhookUrl(s.value);
       }
     }
     if (hasUrl && hasToken) {
@@ -92,6 +94,7 @@ export default function AdminPage() {
       for (const { key, value } of [
         { key: 'uazapi_server_url', value: settingsUrl.trim() },
         { key: 'uazapi_instance_token', value: settingsToken.trim() },
+        { key: 'webhook_url', value: webhookUrl.trim() },
       ]) {
         if (!value) continue;
         const { data: existing } = await supabase.from('app_settings').select('id').eq('key', key).single();
@@ -580,6 +583,23 @@ export default function AdminPage() {
                 <Save className="w-4 h-4" />
                 {savingSettings ? 'Salvando...' : 'Salvar configurações'}
               </Button>
+            </div>
+
+            {/* Webhook n8n */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Webhook (n8n / Automação)</h3>
+              <p className="text-xs text-muted-foreground">
+                Cole a URL do webhook para receber os dados completos do anúncio automaticamente ao publicar.
+              </p>
+              <Input
+                value={webhookUrl}
+                onChange={e => setWebhookUrl(e.target.value)}
+                placeholder="https://seu-n8n.com/webhook/..."
+                className="h-11 rounded-xl"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                📦 Dados enviados: título, descrição, preço, categoria, fotos, contato, região, link do anúncio e dados do anunciante.
+              </p>
             </div>
 
             {/* Connection Status */}

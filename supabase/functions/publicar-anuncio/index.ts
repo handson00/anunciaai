@@ -95,8 +95,8 @@ Deno.serve(async (req) => {
     lines.push('', `🔗 Ver mais fotos e detalhes:`, `${siteUrl}/ad/${ad.slug}`);
     const caption = lines.join('\n');
 
-    // Read UazAPI config from app_settings (priority) or env vars (fallback)
-    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    // Read settings from app_settings (priority) or env vars (fallback)
+    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url']);
     const settingsMap: Record<string, string> = {};
     if (settings) for (const s of settings) settingsMap[s.key] = s.value;
 
@@ -170,9 +170,49 @@ Deno.serve(async (req) => {
     }
 
     // Update ad status
-    await supabase.from('ads').update({
-      status: allSuccess ? 'published' : 'error',
-    }).eq('id', anuncio_id);
+    const finalStatus = allSuccess ? 'published' : 'error';
+    await supabase.from('ads').update({ status: finalStatus }).eq('id', anuncio_id);
+
+    // Send webhook if configured
+    const webhookUrl = settingsMap['webhook_url'];
+    if (webhookUrl) {
+      try {
+        console.log('Sending webhook to:', webhookUrl);
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'ad_published',
+            timestamp: new Date().toISOString(),
+            ad: {
+              id: ad.id,
+              title: ad.title,
+              description: ad.description,
+              price: ad.price,
+              category: ad.category,
+              condition: ad.condition,
+              brand: ad.brand,
+              region: ad.region,
+              contact_phone: ad.contact_phone,
+              main_photo: ad.main_photo,
+              photos: ad.photos,
+              slug: ad.slug,
+              status: finalStatus,
+              link: `${siteUrl}/ad/${ad.slug}`,
+            },
+            advertiser: {
+              name: profile?.name || 'Anunciante',
+              user_id: user.id,
+            },
+            groups_sent: groups.map(g => ({ id: g.id, name: g.name, whatsapp_id: g.whatsapp_group_id })),
+            all_success: allSuccess,
+          }),
+        });
+        console.log('Webhook sent successfully');
+      } catch (webhookErr: any) {
+        console.error('Webhook error:', webhookErr.message);
+      }
+    }
 
     return new Response(JSON.stringify({
       success: allSuccess,
