@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Plus, List, UserCog, LogOut, Shield } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
@@ -39,9 +40,12 @@ export function Dashboard() {
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-bold">
-            <span className="text-cta">anunci</span>AI
-          </h1>
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="anunciaAI" className="w-8 h-8" />
+            <h1 className="text-lg font-bold">
+              <span className="text-cta">anunci</span>AI
+            </h1>
+          </div>
           <div className="flex items-center gap-2">
             {currentUser.is_admin && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
