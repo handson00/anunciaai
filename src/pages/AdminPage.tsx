@@ -86,6 +86,46 @@ export default function AdminPage() {
     toast.success(blocked ? 'Anunciante desbloqueado' : 'Anunciante bloqueado');
   };
 
+  const fetchWhatsappGroups = async () => {
+    setLoadingWaGroups(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('listar-grupos-whatsapp');
+      if (error) {
+        toast.error('Erro ao buscar grupos do WhatsApp');
+        console.error(error);
+        return;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setWhatsappGroups(data?.groups || []);
+      toast.success(`${(data?.groups || []).length} grupos encontrados`);
+    } catch (err) {
+      toast.error('Erro ao conectar com WhatsApp');
+    } finally {
+      setLoadingWaGroups(false);
+    }
+  };
+
+  const handleImportGroup = async (waGroup: any) => {
+    const existingIds = groups.map(g => g.whatsapp_group_id);
+    const groupId = waGroup.id || waGroup.jid || waGroup.groupId;
+    const groupName = waGroup.subject || waGroup.name || 'Grupo';
+    
+    if (existingIds.includes(groupId)) {
+      toast.info('Grupo já cadastrado');
+      return;
+    }
+
+    await supabase.from('community_groups').insert({
+      name: groupName,
+      whatsapp_group_id: groupId,
+    });
+    loadGroups();
+    toast.success(`Grupo "${groupName}" importado`);
+  };
+
   const handleAddGroup = async () => {
     if (!newGroupName.trim() || !newGroupId.trim()) {
       toast.error('Preencha nome e ID do grupo');
