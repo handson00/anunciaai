@@ -111,16 +111,16 @@ Deno.serve(async (req) => {
 
     for (const group of groups) {
       try {
-        const response = await fetch(`${uazapiUrl}/sendImage`, {
+        const response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${uazapiToken}`,
           },
           body: JSON.stringify({
-            to: group.whatsapp_group_id,
-            image: ad.main_photo,
+            number: group.whatsapp_group_id,
+            media: ad.main_photo,
             caption: caption,
+            type: 'image',
           }),
         });
 
