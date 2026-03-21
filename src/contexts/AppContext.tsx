@@ -252,7 +252,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .select('*')
       .eq('is_admin', false)
       .order('created_at', { ascending: false });
-    setUsers((data || []) as Profile[]);
+    setUsers((data || []) as unknown as Profile[]);
   };
 
   const publishAd = async (adId: string): Promise<{ success: boolean; error?: string }> => {
