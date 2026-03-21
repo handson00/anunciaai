@@ -16,6 +16,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<'ads' | 'users'>('ads');
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   if (!currentUser?.isAdmin) {
     return (
