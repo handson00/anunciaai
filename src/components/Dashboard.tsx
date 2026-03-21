@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,12 @@ export function Dashboard() {
   const { currentUser, logout, getUserAds } = useApp();
   const navigate = useNavigate();
   const myAds = getUserAds();
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/', { replace: true });
+    }
+  }, [currentUser, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
