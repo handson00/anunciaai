@@ -219,19 +219,22 @@ export default function AdDetailPage() {
       {/* Fixed Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-10">
         <div className="container max-w-lg mx-auto flex gap-3">
-          {canPublish ? (
+          {canPublish && (
             <Button variant="cta" size="lg" className="flex-1" onClick={handlePublish} disabled={publishing}>
-              {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> {ad.status === 'published' ? 'Republicar nos grupos' : 'Publicar nos grupos'}</>}
+              {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> {ad.status === 'published' ? 'Republicar' : 'Publicar nos grupos'}</>}
             </Button>
-          ) : (
+          )}
+          {(!isOwner || ad.status === 'published') && (
             <>
               <Button variant="outline" size="lg" className="flex-1" onClick={handleShare}>
                 <Share2 className="w-5 h-5" /> Compartilhar
               </Button>
-              <Button variant="cta" size="lg" className="flex-1"
-                onClick={() => window.open(`https://wa.me/55${ad.contact_phone}`, '_blank')}>
-                <Phone className="w-5 h-5" /> Contato
-              </Button>
+              {!isOwner && (
+                <Button variant="cta" size="lg" className="flex-1"
+                  onClick={() => window.open(`https://wa.me/55${ad.contact_phone}`, '_blank')}>
+                  <Phone className="w-5 h-5" /> Contato
+                </Button>
+              )}
             </>
           )}
         </div>
