@@ -87,32 +87,38 @@ export function AdForm({ category, onBack }: Props) {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
     if (!price.trim()) { toast.error('Digite o valor'); return; }
-    if (photos.length === 0) { toast.error('Adicione pelo menos uma foto'); return; }
+    if (photoPreviews.length === 0) { toast.error('Adicione pelo menos uma foto'); return; }
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
     if (showCondition && !condition) { toast.error('Selecione a condição'); return; }
 
     const priceNum = parseFloat(price.replace(/\D/g, '')) / 100;
 
     setSubmitting(true);
-    const ad = await createAd({
-      category,
-      title: title.trim(),
-      description: description.trim(),
-      price: priceNum,
-      condition: condition || undefined,
-      brand: brand.trim() || undefined,
-      region: region.trim() || undefined,
-      main_photo: photos[0],
-      photos: photos.slice(1),
-      contact_phone: contactPhone.replace(/\D/g, ''),
-    });
-    setSubmitting(false);
+    try {
+      const uploadedUrls = await uploadPhotos();
+      const ad = await createAd({
+        category,
+        title: title.trim(),
+        description: description.trim(),
+        price: priceNum,
+        condition: condition || undefined,
+        brand: brand.trim() || undefined,
+        region: region.trim() || undefined,
+        main_photo: uploadedUrls[0],
+        photos: uploadedUrls.slice(1),
+        contact_phone: contactPhone.replace(/\D/g, ''),
+      });
+      setSubmitting(false);
 
-    if (ad) {
-      toast.success('Anúncio criado com sucesso!');
-      navigate(`/ad/${ad.slug}`);
-    } else {
-      toast.error('Erro ao criar anúncio');
+      if (ad) {
+        toast.success('Anúncio criado com sucesso!');
+        navigate(`/ad/${ad.slug}`);
+      } else {
+        toast.error('Erro ao criar anúncio');
+      }
+    } catch {
+      setSubmitting(false);
+      toast.error('Erro ao enviar fotos');
     }
   };
 
