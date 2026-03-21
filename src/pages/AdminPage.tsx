@@ -46,8 +46,42 @@ export default function AdminPage() {
       fetchAds();
       fetchUsers();
       loadGroups();
+      loadSettings();
     }
   }, [currentUser]);
+
+  const loadSettings = async () => {
+    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    if (data) {
+      for (const s of data) {
+        if (s.key === 'uazapi_server_url') setSettingsUrl(s.value);
+        if (s.key === 'uazapi_instance_token') setSettingsToken(s.value);
+      }
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      for (const { key, value } of [
+        { key: 'uazapi_server_url', value: settingsUrl.trim() },
+        { key: 'uazapi_instance_token', value: settingsToken.trim() },
+      ]) {
+        if (!value) continue;
+        const { data: existing } = await supabase.from('app_settings').select('id').eq('key', key).single();
+        if (existing) {
+          await supabase.from('app_settings').update({ value, updated_at: new Date().toISOString() }).eq('key', key);
+        } else {
+          await supabase.from('app_settings').insert({ key, value });
+        }
+      }
+      toast.success('Configurações salvas');
+    } catch {
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const loadGroups = async () => {
     const { data } = await supabase.from('community_groups').select('*').order('created_at', { ascending: false });
