@@ -110,8 +110,8 @@ export default function AdminPage() {
 
   const handleImportGroup = async (waGroup: any) => {
     const existingIds = groups.map(g => g.whatsapp_group_id);
-    const groupId = waGroup.id || waGroup.jid || waGroup.groupId;
-    const groupName = waGroup.subject || waGroup.name || 'Grupo';
+    const groupId = waGroup.JID || waGroup.id || waGroup.jid || waGroup.groupId;
+    const groupName = waGroup.Name || waGroup.subject || waGroup.name || 'Grupo';
     
     if (existingIds.includes(groupId)) {
       toast.info('Grupo já cadastrado');
