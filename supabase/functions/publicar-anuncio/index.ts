@@ -79,8 +79,12 @@ Deno.serve(async (req) => {
       automobile: '🚗', product: '🛒', property: '🏠', service: '🔧',
     };
 
-    const siteUrlSetting = settingsMap['site_url'];
-    const siteUrl = siteUrlSetting || Deno.env.get('SITE_URL') || 'https://anunciaai.lovable.app';
+    // Read settings from app_settings (priority) or env vars (fallback)
+    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'site_url']);
+    const settingsMap: Record<string, string> = {};
+    if (settings) for (const s of settings) settingsMap[s.key] = s.value;
+
+    const siteUrl = settingsMap['site_url'] || Deno.env.get('SITE_URL') || 'https://anunciaai.lovable.app';
     const emoji = catEmoji[ad.category] || '📦';
     const lines = [
       `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
@@ -95,11 +99,6 @@ Deno.serve(async (req) => {
     lines.push('', `📝 ${ad.description}`, '', `📞 Contato: ${ad.contact_phone}`);
     lines.push('', `🔗 Ver mais fotos e detalhes:`, `${siteUrl}/ad/${ad.slug}`);
     const caption = lines.join('\n');
-
-    // Read settings from app_settings (priority) or env vars (fallback)
-    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url']);
-    const settingsMap: Record<string, string> = {};
-    if (settings) for (const s of settings) settingsMap[s.key] = s.value;
 
     const uazapiUrl = settingsMap['uazapi_server_url'] || Deno.env.get('UAZAPI_SERVER_URL');
     const uazapiToken = settingsMap['uazapi_instance_token'] || Deno.env.get('UAZAPI_INSTANCE_TOKEN');
