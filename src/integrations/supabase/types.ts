@@ -14,16 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ads: {
+        Row: {
+          brand: string | null
+          category: Database["public"]["Enums"]["ad_category"]
+          condition: Database["public"]["Enums"]["ad_condition"] | null
+          contact_phone: string
+          created_at: string
+          description: string
+          id: string
+          main_photo: string
+          photos: string[] | null
+          price: number
+          region: string | null
+          slug: string
+          status: Database["public"]["Enums"]["ad_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string | null
+          category: Database["public"]["Enums"]["ad_category"]
+          condition?: Database["public"]["Enums"]["ad_condition"] | null
+          contact_phone: string
+          created_at?: string
+          description: string
+          id?: string
+          main_photo: string
+          photos?: string[] | null
+          price: number
+          region?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["ad_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string | null
+          category?: Database["public"]["Enums"]["ad_category"]
+          condition?: Database["public"]["Enums"]["ad_condition"] | null
+          contact_phone?: string
+          created_at?: string
+          description?: string
+          id?: string
+          main_photo?: string
+          photos?: string[] | null
+          price?: number
+          region?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["ad_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_groups: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          whatsapp_group_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          whatsapp_group_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          whatsapp_group_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          id: string
+          is_admin: boolean
+          name: string
+          phone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          name: string
+          phone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          name?: string
+          phone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      publication_logs: {
+        Row: {
+          ad_id: string
+          api_response: Json | null
+          created_at: string
+          group_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          ad_id: string
+          api_response?: Json | null
+          created_at?: string
+          group_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          ad_id?: string
+          api_response?: Json | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_logs_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      ad_category: "automobile" | "product" | "property" | "service"
+      ad_condition: "new" | "used"
+      ad_status: "draft" | "ready" | "published" | "error"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +307,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      ad_category: ["automobile", "product", "property", "service"],
+      ad_condition: ["new", "used"],
+      ad_status: ["draft", "ready", "published", "error"],
+    },
   },
 } as const
