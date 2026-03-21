@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { WelcomeModal } from '@/components/WelcomeModal';
+import logo from '@/assets/logo.png';
 
 export default function Index() {
   const { currentUser, loading } = useApp();
@@ -17,6 +18,7 @@ export default function Index() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
+          <img src={logo} alt="anunciaAI" className="w-16 h-16 mx-auto" />
           <h1 className="text-2xl font-bold">
             <span className="text-cta">anunci</span>AI
           </h1>

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
-import { Smartphone, ArrowRight, UserPlus, Loader2 } from 'lucide-react';
+import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -63,9 +64,7 @@ export function WelcomeModal() {
         {step === 'phone' ? (
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-4">
-                <Smartphone className="w-7 h-7 text-accent-foreground" />
-              </div>
+              <img src={logo} alt="anunciaAI" className="mx-auto w-20 h-20 mb-4" />
               <h1 className="text-2xl font-bold text-foreground leading-tight">
                 Bem-vindo ao <span className="text-cta">anunci</span>AI
               </h1>
