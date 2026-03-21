@@ -55,7 +55,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const groups = await response.json();
+    const rawData = await response.json();
+    console.log('UazAPI response structure:', JSON.stringify(Object.keys(rawData)), 'isArray:', Array.isArray(rawData));
+    
+    // UazAPI may return array directly or wrapped in an object
+    const groups = Array.isArray(rawData) ? rawData : (rawData.groups || rawData.data || []);
     
     return new Response(JSON.stringify({ groups }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
