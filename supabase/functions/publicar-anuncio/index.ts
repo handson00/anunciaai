@@ -108,23 +108,41 @@ Deno.serve(async (req) => {
     }
 
     let allSuccess = true;
+    console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}`);
 
     for (const group of groups) {
       try {
-        const response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            number: group.whatsapp_group_id,
-            media: ad.main_photo,
-            caption: caption,
-            type: 'image',
-          }),
-        });
+        console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
+        
+        // Check if main_photo is a base64 data URI - if so, send text only
+        const isBase64 = ad.main_photo.startsWith('data:');
+        
+        let response;
+        if (isBase64) {
+          // Send as text message with link (base64 images are too large for media API)
+          response = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              number: group.whatsapp_group_id,
+              text: caption,
+            }),
+          });
+        } else {
+          // Send as image with URL
+          response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              number: group.whatsapp_group_id,
+              file: ad.main_photo,
+              caption: caption,
+            }),
+          });
+        }
 
         const result = await response.json();
+        console.log(`Response for ${group.name}:`, JSON.stringify(result).substring(0, 200));
 
         // Log
         await supabase.from('publication_logs').insert({
@@ -136,6 +154,7 @@ Deno.serve(async (req) => {
 
         if (!response.ok) allSuccess = false;
       } catch (err: any) {
+        console.error(`Error sending to ${group.name}:`, err.message);
         await supabase.from('publication_logs').insert({
           ad_id: anuncio_id,
           group_id: group.id,
