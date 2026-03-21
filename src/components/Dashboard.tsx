@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Plus, List, UserCog, LogOut, Shield } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
