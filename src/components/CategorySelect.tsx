@@ -1,5 +1,6 @@
-import { AdCategory } from '@/contexts/AppContext';
 import { Car, Package, Home, Wrench } from 'lucide-react';
+
+export type AdCategory = 'automobile' | 'product' | 'property' | 'service';
 
 const categories: { key: AdCategory; label: string; icon: typeof Car; desc: string }[] = [
   { key: 'automobile', label: 'Automóvel', icon: Car, desc: 'Carros, motos, caminhões' },

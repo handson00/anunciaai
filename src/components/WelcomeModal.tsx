@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
-import { Smartphone, ArrowRight, UserPlus } from 'lucide-react';
+import { Smartphone, ArrowRight, UserPlus, Loader2 } from 'lucide-react';
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -17,40 +17,44 @@ export function WelcomeModal() {
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [blocked, setBlocked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handlePhoneSubmit = () => {
+  const handlePhoneContinue = async () => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Digite um número válido');
       return;
     }
-    const user = login(digits);
-    if (user) return; // logged in
-    if (user === null && blocked === false) {
-      // Check if user exists but is blocked
+    setSubmitting(true);
+    setError('');
+    const result = await login(digits);
+    setSubmitting(false);
+
+    if (result.success) return;
+    if (result.error === 'not_found') {
       setStep('register');
-    }
-  };
-
-  const handlePhoneContinue = () => {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 10) {
-      setError('Digite um número válido');
       return;
     }
-    const result = login(digits);
-    if (result) return;
-    // user not found, go to register
-    setStep('register');
+    if (result.error === 'blocked') {
+      setError('Conta bloqueada. Contate o administrador.');
+      return;
+    }
+    setError(result.error || 'Erro ao entrar');
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!name.trim()) {
       setError('Digite seu nome');
       return;
     }
-    register(phone, name.trim());
+    setSubmitting(true);
+    setError('');
+    const result = await register(phone, name.trim());
+    setSubmitting(false);
+
+    if (!result.success) {
+      setError(result.error || 'Erro ao cadastrar');
+    }
   };
 
   return (
@@ -66,7 +70,7 @@ export function WelcomeModal() {
                 Bem-vindo ao <span className="text-cta">anunci</span>AI
               </h1>
               <p className="text-muted-foreground text-sm">
-                Digite seu número de celular para começar a anunciar
+                Digite seu número de celular para começar
               </p>
             </div>
 
@@ -83,7 +87,6 @@ export function WelcomeModal() {
                 autoFocus
               />
               {error && <p className="text-destructive text-sm text-center">{error}</p>}
-              {blocked && <p className="text-destructive text-sm text-center">Conta bloqueada. Contate o administrador.</p>}
             </div>
 
             <Button
@@ -91,9 +94,9 @@ export function WelcomeModal() {
               size="xl"
               className="w-full"
               onClick={handlePhoneContinue}
+              disabled={submitting}
             >
-              Continuar
-              <ArrowRight className="w-5 h-5" />
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continuar <ArrowRight className="w-5 h-5" /></>}
             </Button>
           </div>
         ) : (
@@ -126,21 +129,11 @@ export function WelcomeModal() {
             </div>
 
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setStep('phone')}
-                className="flex-1"
-              >
+              <Button variant="outline" size="lg" onClick={() => { setStep('phone'); setError(''); }} className="flex-1">
                 Voltar
               </Button>
-              <Button
-                variant="cta"
-                size="lg"
-                className="flex-1"
-                onClick={handleRegister}
-              >
-                Criar conta
+              <Button variant="cta" size="lg" className="flex-1" onClick={handleRegister} disabled={submitting}>
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Criar conta'}
               </Button>
             </div>
           </div>

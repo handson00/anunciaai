@@ -4,7 +4,7 @@ import { useApp } from '@/contexts/AppContext';
 import { WelcomeModal } from '@/components/WelcomeModal';
 
 export default function Index() {
-  const { currentUser } = useApp();
+  const { currentUser, loading } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -12,6 +12,19 @@ export default function Index() {
       navigate('/dashboard', { replace: true });
     }
   }, [currentUser, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <h1 className="text-2xl font-bold">
+            <span className="text-cta">anunci</span>AI
+          </h1>
+          <div className="w-8 h-8 border-2 border-cta border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
+      </div>
+    );
+  }
 
   if (currentUser) return null;
 

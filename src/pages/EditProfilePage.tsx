@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function EditProfilePage() {
-  const { currentUser, updateUser } = useApp();
+  const { currentUser, updateProfile } = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState(currentUser?.name || '');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { toast.error('Digite seu nome'); return; }
-    updateUser(currentUser!.id, { name: name.trim() });
+    setSaving(true);
+    await updateProfile({ name: name.trim() });
+    setSaving(false);
     toast.success('Dados atualizados!');
     navigate('/dashboard');
   };
@@ -43,9 +46,8 @@ export default function EditProfilePage() {
             autoFocus
           />
         </div>
-        <Button variant="cta" size="lg" className="w-full" onClick={handleSave}>
-          <Save className="w-5 h-5" />
-          Salvar alterações
+        <Button variant="cta" size="lg" className="w-full" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Salvar alterações</>}
         </Button>
       </div>
     </div>

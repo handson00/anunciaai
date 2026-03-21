@@ -4,7 +4,7 @@ import { AdCategory, useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Camera, Plus, X, Check } from 'lucide-react';
+import { Camera, Plus, X, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -36,10 +36,12 @@ export function AdForm({ category, onBack }: Props) {
   const [price, setPrice] = useState('');
   const [condition, setCondition] = useState<'new' | 'used' | ''>('');
   const [brand, setBrand] = useState('');
+  const [region, setRegion] = useState('');
   const [contactPhone, setContactPhone] = useState(
     currentUser ? formatPhone(currentUser.phone) : ''
   );
   const [photos, setPhotos] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const showCondition = category === 'automobile' || category === 'product';
   const showBrand = category === 'product';
@@ -60,7 +62,7 @@ export function AdForm({ category, onBack }: Props) {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
     if (!price.trim()) { toast.error('Digite o valor'); return; }
@@ -70,20 +72,27 @@ export function AdForm({ category, onBack }: Props) {
 
     const priceNum = parseFloat(price.replace(/\D/g, '')) / 100;
 
-    const ad = createAd({
+    setSubmitting(true);
+    const ad = await createAd({
       category,
       title: title.trim(),
       description: description.trim(),
       price: priceNum,
       condition: condition || undefined,
       brand: brand.trim() || undefined,
-      mainPhoto: photos[0],
+      region: region.trim() || undefined,
+      main_photo: photos[0],
       photos: photos.slice(1),
-      contactPhone: contactPhone.replace(/\D/g, ''),
+      contact_phone: contactPhone.replace(/\D/g, ''),
     });
+    setSubmitting(false);
 
-    toast.success('Anúncio criado com sucesso!');
-    navigate(`/ad/${ad.slug}`);
+    if (ad) {
+      toast.success('Anúncio criado com sucesso!');
+      navigate(`/ad/${ad.slug}`);
+    } else {
+      toast.error('Erro ao criar anúncio');
+    }
   };
 
   const formatPrice = (value: string) => {
@@ -223,6 +232,19 @@ export function AdForm({ category, onBack }: Props) {
         />
       </div>
 
+      {/* Region */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-1.5 block">
+          Região / Bairro
+        </label>
+        <Input
+          value={region}
+          onChange={e => setRegion(e.target.value)}
+          placeholder="Ex: Centro, Bairro X..."
+          className="h-12 rounded-xl"
+        />
+      </div>
+
       {/* Contact */}
       <div>
         <label className="text-sm font-medium text-foreground mb-1.5 block">
@@ -242,9 +264,8 @@ export function AdForm({ category, onBack }: Props) {
         <Button variant="outline" size="lg" onClick={onBack} className="flex-1">
           Voltar
         </Button>
-        <Button variant="cta" size="lg" className="flex-1" onClick={handleSubmit}>
-          <Plus className="w-5 h-5" />
-          Publicar
+        <Button variant="cta" size="lg" className="flex-1" onClick={handleSubmit} disabled={submitting}>
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /> Publicar</>}
         </Button>
       </div>
     </div>

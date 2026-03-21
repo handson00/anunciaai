@@ -1,24 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, AdCategory } from '@/contexts/AppContext';
+import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categoryLabels: Record<AdCategory, string> = {
   automobile: 'Automóvel', product: 'Produto', property: 'Imóvel', service: 'Serviço',
 };
 
+interface CommunityGroup {
+  id: string;
+  name: string;
+  whatsapp_group_id: string;
+  active: boolean;
+}
+
 export default function AdminPage() {
-  const { currentUser, users, ads, deleteAd, updateAd, updateUser } = useApp();
+  const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups'>('ads');
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [groups, setGroups] = useState<CommunityGroup[]>([]);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupId, setNewGroupId] = useState('');
 
-  if (!currentUser?.isAdmin) {
+  useEffect(() => {
+    if (currentUser?.is_admin) {
+      fetchAds();
+      fetchUsers();
+      loadGroups();
+    }
+  }, [currentUser]);
+
+  const loadGroups = async () => {
+    const { data } = await supabase.from('community_groups').select('*').order('created_at', { ascending: false });
+    setGroups((data || []) as CommunityGroup[]);
+  };
+
+  if (!currentUser?.is_admin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -31,26 +55,55 @@ export default function AdminPage() {
   }
 
   const filteredAds = ads.filter(ad => {
-    const matchSearch = ad.title.toLowerCase().includes(search.toLowerCase()) ||
-      ad.userName.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = ad.title.toLowerCase().includes(search.toLowerCase());
     const matchCategory = !filterCategory || ad.category === filterCategory;
     return matchSearch && matchCategory;
   });
 
   const filteredUsers = users.filter(u =>
-    !u.isAdmin && (u.name.toLowerCase().includes(search.toLowerCase()) || u.phone.includes(search))
+    u.name.toLowerCase().includes(search.toLowerCase()) || u.phone.includes(search)
   );
 
-  const handleDeleteAd = (id: string) => {
+  const handleDeleteAd = async (id: string) => {
     if (confirm('Excluir este anúncio?')) {
-      deleteAd(id);
+      await deleteAd(id);
+      fetchAds();
       toast.success('Anúncio excluído');
     }
   };
 
-  const handleToggleBlock = (userId: string, blocked: boolean) => {
-    updateUser(userId, { blocked: !blocked });
+  const handleToggleBlock = async (userId: string, blocked: boolean) => {
+    await supabase.from('profiles').update({ blocked: !blocked }).eq('user_id', userId);
+    fetchUsers();
     toast.success(blocked ? 'Anunciante desbloqueado' : 'Anunciante bloqueado');
+  };
+
+  const handleAddGroup = async () => {
+    if (!newGroupName.trim() || !newGroupId.trim()) {
+      toast.error('Preencha nome e ID do grupo');
+      return;
+    }
+    await supabase.from('community_groups').insert({
+      name: newGroupName.trim(),
+      whatsapp_group_id: newGroupId.trim(),
+    });
+    setNewGroupName('');
+    setNewGroupId('');
+    loadGroups();
+    toast.success('Grupo adicionado');
+  };
+
+  const handleToggleGroup = async (id: string, active: boolean) => {
+    await supabase.from('community_groups').update({ active: !active }).eq('id', id);
+    loadGroups();
+  };
+
+  const handleDeleteGroup = async (id: string) => {
+    if (confirm('Remover este grupo?')) {
+      await supabase.from('community_groups').delete().eq('id', id);
+      loadGroups();
+      toast.success('Grupo removido');
+    }
   };
 
   return (
@@ -66,69 +119,64 @@ export default function AdminPage() {
 
       <div className="container max-w-2xl mx-auto px-4 py-4 space-y-4">
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="bg-card border rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{ads.length}</p>
             <p className="text-xs text-muted-foreground">Anúncios</p>
           </div>
           <div className="bg-card border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{users.filter(u => !u.isAdmin).length}</p>
+            <p className="text-2xl font-bold text-foreground">{users.length}</p>
             <p className="text-xs text-muted-foreground">Anunciantes</p>
+          </div>
+          <div className="bg-card border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{groups.filter(g => g.active).length}</p>
+            <p className="text-xs text-muted-foreground">Grupos</p>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-2">
-          <button
-            onClick={() => { setTab('ads'); setSearch(''); }}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              tab === 'ads' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-            }`}
-          >
-            <Megaphone className="w-4 h-4 inline mr-1.5" />
-            Anúncios
-          </button>
-          <button
-            onClick={() => { setTab('users'); setSearch(''); }}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              tab === 'users' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-            }`}
-          >
-            <Users className="w-4 h-4 inline mr-1.5" />
-            Anunciantes
-          </button>
+          {[
+            { key: 'ads' as const, icon: Megaphone, label: 'Anúncios' },
+            { key: 'users' as const, icon: Users, label: 'Anunciantes' },
+            { key: 'groups' as const, icon: Radio, label: 'Grupos' },
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); setSearch(''); }}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                tab === t.key ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+              }`}
+            >
+              <t.icon className="w-4 h-4 inline mr-1" />
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={tab === 'ads' ? 'Buscar anúncio...' : 'Buscar anunciante...'}
-            className="pl-10 h-11 rounded-xl"
-          />
-        </div>
+        {tab !== 'groups' && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={tab === 'ads' ? 'Buscar anúncio...' : 'Buscar anunciante...'}
+              className="pl-10 h-11 rounded-xl"
+            />
+          </div>
+        )}
 
-        {/* Category Filter for Ads */}
+        {/* Category Filter */}
         {tab === 'ads' && (
           <div className="flex gap-2 overflow-x-auto pb-1">
-            <button
-              onClick={() => setFilterCategory('')}
-              className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap font-medium transition-all ${
-                !filterCategory ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-              }`}
-            >
+            <button onClick={() => setFilterCategory('')}
+              className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap font-medium ${!filterCategory ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
               Todos
             </button>
             {(Object.keys(categoryLabels) as AdCategory[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap font-medium transition-all ${
-                  filterCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-                }`}
-              >
+              <button key={cat} onClick={() => setFilterCategory(cat)}
+                className={`text-xs px-3 py-1.5 rounded-full whitespace-nowrap font-medium ${filterCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
                 {categoryLabels[cat]}
               </button>
             ))}
@@ -136,21 +184,21 @@ export default function AdminPage() {
         )}
 
         {/* Content */}
-        {tab === 'ads' ? (
+        {tab === 'ads' && (
           <div className="space-y-2">
             {filteredAds.length === 0 ? (
               <p className="text-center text-muted-foreground py-8 text-sm">Nenhum anúncio encontrado</p>
             ) : filteredAds.map(ad => (
               <div key={ad.id} className="bg-card border rounded-xl p-3 flex items-center gap-3">
-                {ad.mainPhoto ? (
-                  <img src={ad.mainPhoto} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                {ad.main_photo ? (
+                  <img src={ad.main_photo} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-muted flex-shrink-0" />
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground text-sm truncate">{ad.title}</p>
-                  <p className="text-xs text-muted-foreground">{ad.userName} · {categoryLabels[ad.category]}</p>
-                  <p className="text-cta text-sm font-bold">R$ {ad.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-xs text-muted-foreground">{categoryLabels[ad.category]} · {ad.status}</p>
+                  <p className="text-cta text-sm font-bold">R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => navigate(`/ad/${ad.slug}`)}>
@@ -163,64 +211,56 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {tab === 'users' && (
           <div className="space-y-2">
             {filteredUsers.length === 0 ? (
               <p className="text-center text-muted-foreground py-8 text-sm">Nenhum anunciante encontrado</p>
             ) : filteredUsers.map(user => (
               <div key={user.id} className="bg-card border rounded-xl overflow-hidden">
                 <button
-                  onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
+                  onClick={() => setExpandedUser(expandedUser === user.user_id ? null : user.user_id)}
                   className="w-full p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
                 >
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-                    <span className="font-bold text-accent-foreground text-sm">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
+                    <span className="font-bold text-accent-foreground text-sm">{user.name.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="min-w-0 flex-1 text-left">
                     <p className="font-medium text-foreground text-sm">{user.name}</p>
                     <p className="text-xs text-muted-foreground">{user.phone}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {ads.filter(a => a.userId === user.id).length} anúncio(s)
-                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {user.blocked && <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">Bloqueado</span>}
-                    {expandedUser === user.id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                    {expandedUser === user.user_id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                   </div>
                 </button>
 
-                {expandedUser === user.id && (
+                {expandedUser === user.user_id && (
                   <div className="border-t px-4 pb-4 pt-3 space-y-3">
                     <div className="flex justify-end">
                       <Button
                         variant={user.blocked ? 'outline' : 'ghost'}
                         size="sm"
-                        onClick={() => handleToggleBlock(user.id, user.blocked)}
+                        onClick={() => handleToggleBlock(user.user_id, user.blocked)}
                         className={user.blocked ? 'text-cta' : 'text-destructive'}
                       >
-                        {user.blocked ? (
-                          <><CheckCircle className="w-4 h-4" /> Desbloquear</>
-                        ) : (
-                          <><Ban className="w-4 h-4" /> Bloquear</>
-                        )}
+                        {user.blocked ? <><CheckCircle className="w-4 h-4" /> Desbloquear</> : <><Ban className="w-4 h-4" /> Bloquear</>}
                       </Button>
                     </div>
-
                     {(() => {
-                      const userAds = ads.filter(a => a.userId === user.id);
+                      const userAds = ads.filter(a => a.user_id === user.user_id);
                       if (userAds.length === 0) return <p className="text-xs text-muted-foreground text-center py-2">Nenhum anúncio</p>;
                       return userAds.map(ad => (
                         <div key={ad.id} className="bg-secondary/50 rounded-lg p-3 flex items-center gap-3">
-                          {ad.mainPhoto ? (
-                            <img src={ad.mainPhoto} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          {ad.main_photo ? (
+                            <img src={ad.main_photo} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-muted flex-shrink-0" />
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-foreground text-xs truncate">{ad.title}</p>
-                            <p className="text-cta text-xs font-bold">R$ {ad.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="text-cta text-xs font-bold">R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                           </div>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/ad/${ad.slug}`)}>
@@ -237,6 +277,46 @@ export default function AdminPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === 'groups' && (
+          <div className="space-y-4">
+            {/* Add group form */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Adicionar grupo</h3>
+              <Input value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
+                placeholder="Nome do grupo" className="h-11 rounded-xl" />
+              <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
+                placeholder="ID do grupo no WhatsApp (ex: 120363...@g.us)" className="h-11 rounded-xl" />
+              <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
+                <Plus className="w-4 h-4" /> Adicionar grupo
+              </Button>
+            </div>
+
+            {/* Group list */}
+            <div className="space-y-2">
+              {groups.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4 text-sm">Nenhum grupo cadastrado</p>
+              ) : groups.map(group => (
+                <div key={group.id} className="bg-card border rounded-xl p-4 flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground text-sm">{group.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{group.whatsapp_group_id}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                      onClick={() => handleToggleGroup(group.id, group.active)}>
+                      {group.active ? <Ban className="w-4 h-4 text-muted-foreground" /> : <CheckCircle className="w-4 h-4 text-cta" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteGroup(group.id)}>
+                      <X className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useApp } from '@/contexts/AppContext';
+import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Phone, Share2, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 const categoryLabels: Record<string, string> = {
@@ -13,14 +13,39 @@ const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '🛒', property: '🏠', service: '🔧',
 };
 
+const statusLabels: Record<string, { label: string; class: string }> = {
+  draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
+  ready: { label: 'Pronto', class: 'bg-secondary text-secondary-foreground' },
+  published: { label: 'Publicado', class: 'bg-accent text-accent-foreground' },
+  error: { label: 'Erro', class: 'bg-destructive/10 text-destructive' },
+};
+
 export default function AdDetailPage() {
   const { slug } = useParams();
-  const { getAdBySlug } = useApp();
+  const { getAdBySlug, currentUser, publishAd, updateAd } = useApp();
   const navigate = useNavigate();
+  const [ad, setAd] = useState<Ad | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
-  const ad = getAdBySlug(slug || '');
+  useEffect(() => {
+    if (slug) {
+      getAdBySlug(slug).then(data => {
+        setAd(data);
+        setLoading(false);
+      });
+    }
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-cta border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!ad) {
     return (
@@ -36,20 +61,24 @@ export default function AdDetailPage() {
     );
   }
 
-  const allPhotos = [ad.mainPhoto, ...ad.photos];
+  const allPhotos = [ad.main_photo, ...(ad.photos || [])];
+  const isOwner = currentUser?.user_id === ad.user_id;
+  const canPublish = isOwner && (ad.status === 'draft' || ad.status === 'error');
 
   const generateWhatsAppText = () => {
+    const catLabel = ad.category === 'automobile' ? 'AUTOMÓVEL' : ad.category === 'product' ? 'PRODUTO' : ad.category === 'property' ? 'IMÓVEL' : 'SERVIÇO';
     const emoji = categoryEmoji[ad.category];
     const lines = [
-      `${emoji} *${ad.category === 'automobile' ? 'AUTOMÓVEL' : ad.category === 'product' ? 'PRODUTO' : ad.category === 'property' ? 'IMÓVEL' : 'SERVIÇO'}*`,
+      `${emoji} *${catLabel}*`,
       '',
-      `🏪 ${ad.userName}`,
+      `🏪 ${ad.user_name || 'Anunciante'}`,
       `📦 ${ad.title}`,
-      `💰 R$ ${ad.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ];
+    if (ad.region) lines.push(`📍 ${ad.region}`);
     if (ad.brand) lines.push(`🏷️ Marca: ${ad.brand}`);
     if (ad.condition) lines.push(`📋 ${ad.condition === 'new' ? 'Novo' : 'Usado'}`);
-    lines.push('', `📝 ${ad.description}`, '', `📞 Contato: ${ad.contactPhone}`);
+    lines.push('', `📝 ${ad.description}`, '', `📞 Contato: ${ad.contact_phone}`);
     lines.push('', `🔗 Ver mais: ${window.location.href}`);
     return lines.join('\n');
   };
@@ -71,15 +100,31 @@ export default function AdDetailPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handlePublish = async () => {
+    setPublishing(true);
+    const result = await publishAd(ad.id);
+    setPublishing(false);
+
+    if (result.success) {
+      toast.success('Anúncio publicado nos grupos!');
+      setAd({ ...ad, status: 'published' });
+    } else {
+      toast.error(result.error || 'Erro ao publicar');
+      setAd({ ...ad, status: 'error' });
+    }
+  };
+
+  const st = statusLabels[ad.status] || statusLabels.draft;
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-10">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${st.class}`}>{st.label}</span>
             <Button variant="ghost" size="icon" onClick={handleCopyLink}>
               {copied ? <Check className="w-5 h-5 text-cta" /> : <Copy className="w-5 h-5" />}
             </Button>
@@ -93,38 +138,27 @@ export default function AdDetailPage() {
       <div className="container max-w-lg mx-auto">
         {/* Photos */}
         <div className="relative bg-foreground/5">
-          <img
-            src={allPhotos[currentPhoto]}
-            alt={ad.title}
-            className="w-full aspect-[4/3] object-cover"
-          />
+          <img src={allPhotos[currentPhoto]} alt={ad.title} className="w-full aspect-[4/3] object-cover" />
           {allPhotos.length > 1 && (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              {allPhotos.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPhoto(i)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    i === currentPhoto ? 'bg-card w-5' : 'bg-card/60'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-          {allPhotos.length > 1 && (
-            <div className="absolute bottom-3 right-3 bg-foreground/60 text-card text-xs px-2 py-0.5 rounded-full">
-              {currentPhoto + 1}/{allPhotos.length}
-            </div>
+            <>
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                {allPhotos.map((_, i) => (
+                  <button key={i} onClick={() => setCurrentPhoto(i)}
+                    className={`w-2 h-2 rounded-full transition-all ${i === currentPhoto ? 'bg-card w-5' : 'bg-card/60'}`}
+                  />
+                ))}
+              </div>
+              <div className="absolute bottom-3 right-3 bg-foreground/60 text-card text-xs px-2 py-0.5 rounded-full">
+                {currentPhoto + 1}/{allPhotos.length}
+              </div>
+            </>
           )}
         </div>
 
-        {/* Thumbnails */}
         {allPhotos.length > 1 && (
           <div className="flex gap-2 px-4 py-3 overflow-x-auto">
             {allPhotos.map((photo, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPhoto(i)}
+              <button key={i} onClick={() => setCurrentPhoto(i)}
                 className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                   i === currentPhoto ? 'border-primary' : 'border-transparent opacity-60'
                 }`}
@@ -146,7 +180,7 @@ export default function AdDetailPage() {
           <h1 className="text-2xl font-bold text-foreground leading-tight">{ad.title}</h1>
 
           <p className="text-2xl font-bold text-cta">
-            R$ {ad.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -160,46 +194,46 @@ export default function AdDetailPage() {
                 {ad.condition === 'new' ? '✨ Novo' : '♻️ Usado'}
               </span>
             )}
+            {ad.region && (
+              <span className="text-xs bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full">
+                📍 {ad.region}
+              </span>
+            )}
           </div>
 
           <div className="border-t pt-4">
             <h3 className="font-semibold text-foreground mb-2">Descrição</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
-              {ad.description}
-            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{ad.description}</p>
           </div>
 
           <div className="border-t pt-4">
             <h3 className="font-semibold text-foreground mb-1">Anunciante</h3>
-            <p className="text-muted-foreground text-sm">{ad.userName}</p>
+            <p className="text-muted-foreground text-sm">{ad.user_name || 'Anunciante'}</p>
             <p className="text-muted-foreground text-xs mt-0.5">
-              Publicado em {new Date(ad.createdAt).toLocaleDateString('pt-BR')}
+              Publicado em {new Date(ad.created_at).toLocaleDateString('pt-BR')}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Fixed Bottom CTA */}
+      {/* Fixed Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-10">
         <div className="container max-w-lg mx-auto flex gap-3">
-          <Button
-            variant="outline"
-            size="lg"
-            className="flex-1"
-            onClick={handleShare}
-          >
-            <Share2 className="w-5 h-5" />
-            Compartilhar
-          </Button>
-          <Button
-            variant="cta"
-            size="lg"
-            className="flex-1"
-            onClick={() => window.open(`https://wa.me/55${ad.contactPhone}`, '_blank')}
-          >
-            <Phone className="w-5 h-5" />
-            Contato
-          </Button>
+          {canPublish ? (
+            <Button variant="cta" size="lg" className="flex-1" onClick={handlePublish} disabled={publishing}>
+              {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Publicar nos grupos</>}
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="lg" className="flex-1" onClick={handleShare}>
+                <Share2 className="w-5 h-5" /> Compartilhar
+              </Button>
+              <Button variant="cta" size="lg" className="flex-1"
+                onClick={() => window.open(`https://wa.me/55${ad.contact_phone}`, '_blank')}>
+                <Phone className="w-5 h-5" /> Contato
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
