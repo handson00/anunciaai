@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp, AdCategory } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -16,6 +16,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<'ads' | 'users'>('ads');
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   if (!currentUser?.isAdmin) {
     return (
@@ -167,31 +168,73 @@ export default function AdminPage() {
             {filteredUsers.length === 0 ? (
               <p className="text-center text-muted-foreground py-8 text-sm">Nenhum anunciante encontrado</p>
             ) : filteredUsers.map(user => (
-              <div key={user.id} className="bg-card border rounded-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-                  <span className="font-bold text-accent-foreground text-sm">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground text-sm">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">{user.phone}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {ads.filter(a => a.userId === user.id).length} anúncio(s)
-                  </p>
-                </div>
-                <Button
-                  variant={user.blocked ? 'outline' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleToggleBlock(user.id, user.blocked)}
-                  className={user.blocked ? 'text-cta' : 'text-destructive'}
+              <div key={user.id} className="bg-card border rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
+                  className="w-full p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
                 >
-                  {user.blocked ? (
-                    <><CheckCircle className="w-4 h-4" /> Desbloquear</>
-                  ) : (
-                    <><Ban className="w-4 h-4" /> Bloquear</>
-                  )}
-                </Button>
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+                    <span className="font-bold text-accent-foreground text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="font-medium text-foreground text-sm">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.phone}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ads.filter(a => a.userId === user.id).length} anúncio(s)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {user.blocked && <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">Bloqueado</span>}
+                    {expandedUser === user.id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </div>
+                </button>
+
+                {expandedUser === user.id && (
+                  <div className="border-t px-4 pb-4 pt-3 space-y-3">
+                    <div className="flex justify-end">
+                      <Button
+                        variant={user.blocked ? 'outline' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleToggleBlock(user.id, user.blocked)}
+                        className={user.blocked ? 'text-cta' : 'text-destructive'}
+                      >
+                        {user.blocked ? (
+                          <><CheckCircle className="w-4 h-4" /> Desbloquear</>
+                        ) : (
+                          <><Ban className="w-4 h-4" /> Bloquear</>
+                        )}
+                      </Button>
+                    </div>
+
+                    {(() => {
+                      const userAds = ads.filter(a => a.userId === user.id);
+                      if (userAds.length === 0) return <p className="text-xs text-muted-foreground text-center py-2">Nenhum anúncio</p>;
+                      return userAds.map(ad => (
+                        <div key={ad.id} className="bg-secondary/50 rounded-lg p-3 flex items-center gap-3">
+                          {ad.mainPhoto ? (
+                            <img src={ad.mainPhoto} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-muted flex-shrink-0" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground text-xs truncate">{ad.title}</p>
+                            <p className="text-cta text-xs font-bold">R$ {ad.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/ad/${ad.slug}`)}>
+                              <Search className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteAd(ad.id)}>
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
               </div>
             ))}
           </div>
