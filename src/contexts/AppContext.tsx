@@ -1,54 +1,63 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Tables } from '@/integrations/supabase/types';
 
 export type AdCategory = 'automobile' | 'product' | 'property' | 'service';
 export type AdCondition = 'new' | 'used';
-export type AdStatus = 'active' | 'inactive' | 'pending';
+export type AdStatus = 'draft' | 'ready' | 'published' | 'error';
 
-export interface User {
+export interface Profile {
   id: string;
+  user_id: string;
   phone: string;
   name: string;
-  isAdmin: boolean;
+  is_admin: boolean;
   blocked: boolean;
-  createdAt: string;
+  created_at: string;
 }
 
 export interface Ad {
   id: string;
-  userId: string;
+  user_id: string;
   category: AdCategory;
   title: string;
   description: string;
   price: number;
-  condition?: AdCondition;
-  brand?: string;
-  mainPhoto: string;
+  condition?: AdCondition | null;
+  brand?: string | null;
+  region?: string | null;
+  main_photo: string;
   photos: string[];
-  contactPhone: string;
+  contact_phone: string;
   status: AdStatus;
-  createdAt: string;
+  created_at: string;
   slug: string;
-  userName: string;
+  // joined
+  user_name?: string;
 }
 
 interface AppContextType {
-  currentUser: User | null;
-  users: User[];
+  currentUser: Profile | null;
+  authUser: SupabaseUser | null;
+  loading: boolean;
   ads: Ad[];
-  login: (phone: string) => User | null;
-  register: (phone: string, name: string) => User;
-  logout: () => void;
-  createAd: (ad: Omit<Ad, 'id' | 'userId' | 'createdAt' | 'slug' | 'status' | 'userName'>) => Ad;
-  updateAd: (id: string, updates: Partial<Ad>) => void;
-  deleteAd: (id: string) => void;
-  updateUser: (id: string, updates: Partial<User>) => void;
-  getAdBySlug: (slug: string) => Ad | undefined;
-  getUserAds: () => Ad[];
+  users: Profile[];
+  login: (phone: string) => Promise<{ success: boolean; error?: string }>;
+  register: (phone: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  createAd: (ad: Omit<Ad, 'id' | 'user_id' | 'created_at' | 'slug' | 'status'>) => Promise<Ad | null>;
+  updateAd: (id: string, updates: Partial<Ad>) => Promise<void>;
+  deleteAd: (id: string) => Promise<void>;
+  updateProfile: (updates: { name?: string }) => Promise<void>;
+  getAdBySlug: (slug: string) => Promise<Ad | null>;
+  getUserAds: () => Promise<Ad[]>;
+  fetchAds: () => Promise<void>;
+  fetchUsers: () => Promise<void>;
+  publishAd: (adId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const ADMIN_PHONE = '00000000000';
 
 function generateSlug(title: string): string {
   return title
@@ -59,114 +68,215 @@ function generateSlug(title: string): string {
     .replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
 }
 
-function generateId(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('anunciai_current_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [authUser, setAuthUser] = useState<SupabaseUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
 
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('anunciai_users');
-    if (saved) return JSON.parse(saved);
-    return [{
-      id: 'admin-1',
-      phone: ADMIN_PHONE,
-      name: 'Administrador',
-      isAdmin: true,
-      blocked: false,
-      createdAt: new Date().toISOString(),
-    }];
-  });
-
-  const [ads, setAds] = useState<Ad[]>(() => {
-    const saved = localStorage.getItem('anunciai_ads');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    if (data) {
+      setCurrentUser(data as unknown as Profile);
+    }
+    return data as unknown as Profile | null;
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('anunciai_users', JSON.stringify(users));
-  }, [users]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setAuthUser(session.user);
+        // Use setTimeout to avoid Supabase auth deadlock
+        setTimeout(() => fetchProfile(session.user.id), 0);
+      } else {
+        setAuthUser(null);
+        setCurrentUser(null);
+      }
+      setLoading(false);
+    });
 
-  useEffect(() => {
-    localStorage.setItem('anunciai_ads', JSON.stringify(ads));
-  }, [ads]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setAuthUser(session.user);
+        fetchProfile(session.user.id);
+      }
+      setLoading(false);
+    });
 
-  useEffect(() => {
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
+
+  const login = async (phone: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const email = `${cleanPhone}@anunciai.app`;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: cleanPhone,
+    });
+
+    if (error) {
+      if (error.message.includes('Invalid login')) {
+        return { success: false, error: 'not_found' };
+      }
+      return { success: false, error: error.message };
+    }
+
+    if (data.user) {
+      const profile = await fetchProfile(data.user.id);
+      if (profile?.blocked) {
+        await supabase.auth.signOut();
+        return { success: false, error: 'blocked' };
+      }
+    }
+
+    return { success: true };
+  };
+
+  const register = async (phone: string, name: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const email = `${cleanPhone}@anunciai.app`;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: cleanPhone,
+      options: {
+        data: { phone: cleanPhone, name },
+      },
+    });
+
+    if (error) return { success: false, error: error.message };
+    if (data.user) {
+      // Wait briefly for trigger to create profile
+      await new Promise(r => setTimeout(r, 500));
+      await fetchProfile(data.user.id);
+    }
+    return { success: true };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setAuthUser(null);
+    setCurrentUser(null);
+  };
+
+  const createAd = async (adData: Omit<Ad, 'id' | 'user_id' | 'created_at' | 'slug' | 'status'>): Promise<Ad | null> => {
+    if (!authUser) return null;
+    const slug = generateSlug(adData.title);
+
+    const { data, error } = await supabase
+      .from('ads')
+      .insert({
+        user_id: authUser.id,
+        category: adData.category,
+        title: adData.title,
+        description: adData.description,
+        price: adData.price,
+        condition: adData.condition || null,
+        brand: adData.brand || null,
+        region: adData.region || null,
+        main_photo: adData.main_photo,
+        photos: adData.photos || [],
+        contact_phone: adData.contact_phone,
+        slug,
+        status: 'draft' as AdStatus,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating ad:', error);
+      return null;
+    }
+    return data as Ad;
+  };
+
+  const updateAd = async (id: string, updates: Partial<Ad>) => {
+    await supabase.from('ads').update(updates).eq('id', id);
+  };
+
+  const deleteAd = async (id: string) => {
+    await supabase.from('ads').delete().eq('id', id);
+  };
+
+  const updateProfile = async (updates: { name?: string }) => {
+    if (!authUser) return;
+    await supabase.from('profiles').update(updates).eq('user_id', authUser.id);
     if (currentUser) {
-      localStorage.setItem('anunciai_current_user', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('anunciai_current_user');
-    }
-  }, [currentUser]);
-
-  const login = (phone: string): User | null => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const user = users.find(u => u.phone === cleanPhone);
-    if (user) {
-      if (user.blocked) return null;
-      setCurrentUser(user);
-      return user;
-    }
-    return null;
-  };
-
-  const register = (phone: string, name: string): User => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const newUser: User = {
-      id: generateId(),
-      phone: cleanPhone,
-      name,
-      isAdmin: false,
-      blocked: false,
-      createdAt: new Date().toISOString(),
-    };
-    setUsers(prev => [...prev, newUser]);
-    setCurrentUser(newUser);
-    return newUser;
-  };
-
-  const logout = () => setCurrentUser(null);
-
-  const createAd = (adData: Omit<Ad, 'id' | 'userId' | 'createdAt' | 'slug' | 'status' | 'userName'>): Ad => {
-    const newAd: Ad = {
-      ...adData,
-      id: generateId(),
-      userId: currentUser!.id,
-      userName: currentUser!.name,
-      createdAt: new Date().toISOString(),
-      slug: generateSlug(adData.title),
-      status: 'active',
-    };
-    setAds(prev => [newAd, ...prev]);
-    return newAd;
-  };
-
-  const updateAd = (id: string, updates: Partial<Ad>) => {
-    setAds(prev => prev.map(ad => ad.id === id ? { ...ad, ...updates } : ad));
-  };
-
-  const deleteAd = (id: string) => {
-    setAds(prev => prev.filter(ad => ad.id !== id));
-  };
-
-  const updateUser = (id: string, updates: Partial<User>) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
-    if (currentUser?.id === id) {
-      setCurrentUser(prev => prev ? { ...prev, ...updates } : prev);
+      setCurrentUser({ ...currentUser, ...updates });
     }
   };
 
-  const getAdBySlug = (slug: string) => ads.find(ad => ad.slug === slug);
-  const getUserAds = () => ads.filter(ad => ad.userId === currentUser?.id);
+  const getAdBySlug = async (slug: string): Promise<Ad | null> => {
+    const { data } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+    if (!data) return null;
+    // Get user name
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('user_id', data.user_id)
+      .single();
+    return { ...data, user_name: profile?.name || 'Anunciante' } as Ad;
+  };
+
+  const getUserAds = async (): Promise<Ad[]> => {
+    if (!authUser) return [];
+    const { data } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('user_id', authUser.id)
+      .order('created_at', { ascending: false });
+    return (data || []) as Ad[];
+  };
+
+  const fetchAds = async () => {
+    const { data } = await supabase
+      .from('ads')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setAds((data || []) as Ad[]);
+  };
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('is_admin', false)
+      .order('created_at', { ascending: false });
+    setUsers((data || []) as unknown as Profile[]);
+  };
+
+  const publishAd = async (adId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await supabase.functions.invoke('publicar-anuncio', {
+        body: { anuncio_id: adId },
+      });
+      if (response.error) {
+        return { success: false, error: response.error.message };
+      }
+      if (response.data?.error) {
+        return { success: false, error: response.data.error };
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  };
 
   return (
     <AppContext.Provider value={{
-      currentUser, users, ads, login, register, logout,
-      createAd, updateAd, deleteAd, updateUser, getAdBySlug, getUserAds,
+      currentUser, authUser, loading, ads, users,
+      login, register, logout, createAd, updateAd, deleteAd,
+      updateProfile, getAdBySlug, getUserAds, fetchAds, fetchUsers, publishAd,
     }}>
       {children}
     </AppContext.Provider>
