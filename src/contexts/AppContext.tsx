@@ -219,13 +219,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .eq('slug', slug)
       .single();
     if (!data) return null;
-    // Get user name
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('user_id', data.user_id)
-      .single();
-    return { ...data, user_name: profile?.name || 'Anunciante' } as Ad;
+    // Get user name (may fail if not authenticated due to RLS)
+    let userName = 'Anunciante';
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', data.user_id)
+        .single();
+      if (profile?.name) userName = profile.name;
+    } catch {}
+    return { ...data, user_name: userName } as Ad;
   };
 
   const getUserAds = async (): Promise<Ad[]> => {
