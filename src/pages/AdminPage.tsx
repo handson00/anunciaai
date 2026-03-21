@@ -40,6 +40,8 @@ export default function AdminPage() {
   const [settingsToken, setSettingsToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'connected' | 'error'>('idle');
+  const [connectionInfo, setConnectionInfo] = useState<string>('');
 
   useEffect(() => {
     if (currentUser?.is_admin) {
