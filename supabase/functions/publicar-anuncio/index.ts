@@ -95,8 +95,8 @@ Deno.serve(async (req) => {
     lines.push('', `🔗 Ver mais fotos e detalhes:`, `${siteUrl}/ad/${ad.slug}`);
     const caption = lines.join('\n');
 
-    // Read UazAPI config from app_settings (priority) or env vars (fallback)
-    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    // Read settings from app_settings (priority) or env vars (fallback)
+    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url']);
     const settingsMap: Record<string, string> = {};
     if (settings) for (const s of settings) settingsMap[s.key] = s.value;
 
