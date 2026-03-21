@@ -54,11 +54,16 @@ export default function AdminPage() {
 
   const loadSettings = async () => {
     const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    let hasUrl = false, hasToken = false;
     if (data) {
       for (const s of data) {
-        if (s.key === 'uazapi_server_url') setSettingsUrl(s.value);
-        if (s.key === 'uazapi_instance_token') setSettingsToken(s.value);
+        if (s.key === 'uazapi_server_url') { setSettingsUrl(s.value); hasUrl = true; }
+        if (s.key === 'uazapi_instance_token') { setSettingsToken(s.value); hasToken = true; }
       }
+    }
+    if (hasUrl && hasToken) {
+      // Auto-test on load
+      setTimeout(() => testConnection(), 500);
     }
   };
 
