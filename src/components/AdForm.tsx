@@ -41,7 +41,8 @@ export function AdForm({ category, onBack }: Props) {
   const [contactPhone, setContactPhone] = useState(
     currentUser ? formatPhone(currentUser.phone) : ''
   );
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const showCondition = category === 'automobile' || category === 'product';
@@ -51,16 +52,35 @@ export function AdForm({ category, onBack }: Props) {
     const files = e.target.files;
     if (!files) return;
     Array.from(files).forEach(file => {
+      setPhotoFiles(prev => [...prev, file]);
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setPhotos(prev => [...prev, ev.target?.result as string]);
+        setPhotoPreviews(prev => [...prev, ev.target?.result as string]);
       };
       reader.readAsDataURL(file);
     });
   };
 
   const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoFiles(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadPhotos = async (): Promise<string[]> => {
+    if (!currentUser) return [];
+    const urls: string[] = [];
+    for (const file of photoFiles) {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${currentUser.user_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from('ad-photos').upload(path, file);
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+      const { data: urlData } = supabase.storage.from('ad-photos').getPublicUrl(path);
+      urls.push(urlData.publicUrl);
+    }
+    return urls;
   };
 
   const handleSubmit = async () => {
