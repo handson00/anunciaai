@@ -18,6 +18,7 @@ export default function Index() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
+          <img src={logo} alt="anunciaAI" className="w-16 h-16 mx-auto" />
           <h1 className="text-2xl font-bold">
             <span className="text-cta">anunci</span>AI
           </h1>
