@@ -250,6 +250,7 @@ export default function AdminPage() {
             { key: 'ads' as const, icon: Megaphone, label: 'Anúncios' },
             { key: 'users' as const, icon: Users, label: 'Anunciantes' },
             { key: 'groups' as const, icon: Radio, label: 'Grupos' },
+            { key: 'settings' as const, icon: Settings, label: 'Config' },
           ].map(t => (
             <button
               key={t.key}
