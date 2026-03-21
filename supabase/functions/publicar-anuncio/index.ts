@@ -79,7 +79,8 @@ Deno.serve(async (req) => {
       automobile: '🚗', product: '🛒', property: '🏠', service: '🔧',
     };
 
-    const siteUrl = Deno.env.get('SITE_URL') || 'https://anunciai.com';
+    const siteUrlSetting = settingsMap['site_url'];
+    const siteUrl = siteUrlSetting || Deno.env.get('SITE_URL') || 'https://anunciaai.lovable.app';
     const emoji = catEmoji[ad.category] || '📦';
     const lines = [
       `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
