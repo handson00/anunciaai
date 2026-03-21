@@ -262,12 +262,12 @@ export function AdForm({ category, onBack }: Props) {
       {/* Region */}
       <div>
         <label className="text-sm font-medium text-foreground mb-1.5 block">
-          Região / Bairro
+          Cidade
         </label>
         <Input
           value={region}
           onChange={e => setRegion(e.target.value)}
-          placeholder="Ex: Centro, Bairro X..."
+          placeholder="Ex: São Paulo, Curitiba..."
           className="h-12 rounded-xl"
         />
       </div>
