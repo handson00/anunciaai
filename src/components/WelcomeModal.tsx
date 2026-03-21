@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
-import { Smartphone, ArrowRight, UserPlus, Loader2 } from 'lucide-react';
+import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
