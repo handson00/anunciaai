@@ -600,6 +600,10 @@ export default function AdminPage() {
               <p className="text-[10px] text-muted-foreground">
                 📦 Dados enviados: título, descrição, preço, categoria, fotos, contato, região, link do anúncio e dados do anunciante.
               </p>
+              <Button variant="cta" className="w-full" onClick={handleSaveSettings} disabled={savingSettings}>
+                <Save className="w-4 h-4" />
+                {savingSettings ? 'Salvando...' : 'Salvar configurações'}
+              </Button>
             </div>
 
             {/* Connection Status */}
