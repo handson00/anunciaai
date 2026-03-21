@@ -95,9 +95,13 @@ Deno.serve(async (req) => {
     lines.push('', `🔗 Ver mais fotos e detalhes:`, `${siteUrl}/ad/${ad.slug}`);
     const caption = lines.join('\n');
 
-    // UazAPI integration
-    const uazapiUrl = Deno.env.get('UAZAPI_SERVER_URL');
-    const uazapiToken = Deno.env.get('UAZAPI_INSTANCE_TOKEN');
+    // Read UazAPI config from app_settings (priority) or env vars (fallback)
+    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
+    const settingsMap: Record<string, string> = {};
+    if (settings) for (const s of settings) settingsMap[s.key] = s.value;
+
+    const uazapiUrl = settingsMap['uazapi_server_url'] || Deno.env.get('UAZAPI_SERVER_URL');
+    const uazapiToken = settingsMap['uazapi_instance_token'] || Deno.env.get('UAZAPI_INSTANCE_TOKEN');
 
     if (!uazapiUrl || !uazapiToken) {
       // Mark as published even without UazAPI config (for testing)
