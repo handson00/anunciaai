@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Tables } from '@/integrations/supabase/types';
 
 export type AdCategory = 'automobile' | 'product' | 'property' | 'service';
 export type AdCondition = 'new' | 'used';
