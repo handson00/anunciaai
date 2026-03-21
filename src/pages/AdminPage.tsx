@@ -354,6 +354,42 @@ export default function AdminPage() {
 
         {tab === 'groups' && (
           <div className="space-y-4">
+            {/* Fetch from WhatsApp */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm">Importar do WhatsApp</h3>
+                <Button variant="cta" size="sm" onClick={fetchWhatsappGroups} disabled={loadingWaGroups}>
+                  {loadingWaGroups ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {loadingWaGroups ? 'Buscando...' : 'Buscar grupos'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Busca os grupos/comunidades direto do WhatsApp conectado via UazAPI</p>
+              {whatsappGroups.length > 0 && (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {whatsappGroups.map((wg: any, idx: number) => {
+                    const groupId = wg.id || wg.jid || wg.groupId || '';
+                    const groupName = wg.subject || wg.name || 'Grupo';
+                    const isImported = groups.some(g => g.whatsapp_group_id === groupId);
+                    return (
+                      <div key={groupId || idx} className="flex items-center gap-3 bg-secondary/50 rounded-lg p-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-foreground text-sm truncate">{groupName}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{groupId}</p>
+                        </div>
+                        {isImported ? (
+                          <span className="text-xs text-muted-foreground">✓ Importado</span>
+                        ) : (
+                          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleImportGroup(wg)}>
+                            <Download className="w-3.5 h-3.5" /> Importar
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Edit modal */}
             {editingGroup && (
               <div className="bg-card border-2 border-primary rounded-xl p-4 space-y-3">
@@ -368,31 +404,36 @@ export default function AdminPage() {
                 <Input value={editWhatsappId} onChange={e => setEditWhatsappId(e.target.value)}
                   placeholder="ID do grupo no WhatsApp" className="h-11 rounded-xl" />
                 <Input value={editCategory} onChange={e => setEditCategory(e.target.value)}
-                  placeholder="Categoria (opcional, ex: vendas, geral)" className="h-11 rounded-xl" />
+                  placeholder="Categoria (opcional)" className="h-11 rounded-xl" />
                 <Button variant="cta" size="sm" className="w-full" onClick={handleSaveEdit}>
                   <Save className="w-4 h-4" /> Salvar alterações
                 </Button>
               </div>
             )}
 
-            {/* Add group form */}
+            {/* Manual add (collapsed) */}
             {!editingGroup && (
-              <div className="bg-card border rounded-xl p-4 space-y-3">
-                <h3 className="font-semibold text-foreground text-sm">Adicionar grupo</h3>
-                <Input value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
-                  placeholder="Nome do grupo" className="h-11 rounded-xl" />
-                <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
-                  placeholder="ID do grupo no WhatsApp (ex: 120363...@g.us)" className="h-11 rounded-xl" />
-                <Input value={newGroupCategory} onChange={e => setNewGroupCategory(e.target.value)}
-                  placeholder="Categoria (opcional, ex: vendas, geral)" className="h-11 rounded-xl" />
-                <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
-                  <Plus className="w-4 h-4" /> Adicionar grupo
-                </Button>
-              </div>
+              <details className="bg-card border rounded-xl overflow-hidden">
+                <summary className="p-4 cursor-pointer font-semibold text-foreground text-sm">
+                  Adicionar manualmente
+                </summary>
+                <div className="px-4 pb-4 space-y-3">
+                  <Input value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
+                    placeholder="Nome do grupo" className="h-11 rounded-xl" />
+                  <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
+                    placeholder="ID do grupo (ex: 120363...@g.us)" className="h-11 rounded-xl" />
+                  <Input value={newGroupCategory} onChange={e => setNewGroupCategory(e.target.value)}
+                    placeholder="Categoria (opcional)" className="h-11 rounded-xl" />
+                  <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
+                    <Plus className="w-4 h-4" /> Adicionar grupo
+                  </Button>
+                </div>
+              </details>
             )}
 
             {/* Group list */}
             <div className="space-y-2">
+              <h3 className="font-semibold text-foreground text-sm">Grupos cadastrados ({groups.length})</h3>
               {groups.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4 text-sm">Nenhum grupo cadastrado</p>
               ) : groups.map(group => (
