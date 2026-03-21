@@ -34,6 +34,8 @@ export default function AdminPage() {
   const [editName, setEditName] = useState('');
   const [editWhatsappId, setEditWhatsappId] = useState('');
   const [editCategory, setEditCategory] = useState('');
+  const [whatsappGroups, setWhatsappGroups] = useState<any[]>([]);
+  const [loadingWaGroups, setLoadingWaGroups] = useState(false);
 
   useEffect(() => {
     if (currentUser?.is_admin) {
