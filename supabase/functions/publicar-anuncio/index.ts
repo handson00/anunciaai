@@ -111,19 +111,48 @@ Deno.serve(async (req) => {
       });
     }
 
+    let photoUrl = ad.main_photo;
+
+    // If main_photo is base64, upload to storage first to get a public URL
+    if (photoUrl.startsWith('data:')) {
+      console.log('Photo is base64, uploading to storage...');
+      try {
+        const matches = photoUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+          const base64Data = matches[2];
+          const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+          const path = `${ad.user_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('ad-photos')
+            .upload(path, binaryData, { contentType: `image/${matches[1]}` });
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage.from('ad-photos').getPublicUrl(path);
+            photoUrl = urlData.publicUrl;
+            // Update the ad with the storage URL so future publishes work directly
+            await supabase.from('ads').update({ main_photo: photoUrl }).eq('id', anuncio_id);
+            console.log('Photo uploaded to storage:', photoUrl);
+          } else {
+            console.error('Storage upload error:', uploadError.message);
+          }
+        }
+      } catch (uploadErr: any) {
+        console.error('Error uploading base64 to storage:', uploadErr.message);
+      }
+    }
+
     let allSuccess = true;
-    console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}`);
+    console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}, photoUrl: ${photoUrl.substring(0, 80)}`);
 
     for (const group of groups) {
       try {
         console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
-        
-        // Check if main_photo is a base64 data URI - if so, send text only
-        const isBase64 = ad.main_photo.startsWith('data:');
-        
+
         let response;
-        if (isBase64) {
-          // Send as text message with link (base64 images are too large for media API)
+        if (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')) {
+          // Fallback: send text only if storage upload failed
           response = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -133,13 +162,13 @@ Deno.serve(async (req) => {
             }),
           });
         } else {
-          // Send as image with URL
+          // Send as image with public URL
           response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               number: group.whatsapp_group_id,
-              file: ad.main_photo,
+              file: photoUrl,
               caption: caption,
             }),
           });
