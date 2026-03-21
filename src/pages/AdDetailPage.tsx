@@ -63,7 +63,7 @@ export default function AdDetailPage() {
 
   const allPhotos = [ad.main_photo, ...(ad.photos || [])];
   const isOwner = currentUser?.user_id === ad.user_id;
-  const canPublish = isOwner && (ad.status === 'draft' || ad.status === 'error');
+  const canPublish = isOwner && (ad.status === 'draft' || ad.status === 'error' || ad.status === 'published');
 
   const generateWhatsAppText = () => {
     const catLabel = ad.category === 'automobile' ? 'AUTOMÓVEL' : ad.category === 'product' ? 'PRODUTO' : ad.category === 'property' ? 'IMÓVEL' : 'SERVIÇO';
