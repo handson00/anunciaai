@@ -221,7 +221,8 @@ export default function AdDetailPage() {
         <div className="container max-w-lg mx-auto flex gap-3">
           {canPublish ? (
             <Button variant="cta" size="lg" className="flex-1" onClick={handlePublish} disabled={publishing}>
-              {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Publicar nos grupos</>}
+              {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> {ad.status === 'published' ? 'Republicar nos grupos' : 'Publicar nos grupos'}</>}
+            </Button>
             </Button>
           ) : (
             <>
