@@ -15,6 +15,7 @@ export interface Profile {
   is_admin: boolean;
   blocked: boolean;
   created_at: string;
+  avatar_url?: string | null;
 }
 
 export interface Ad {
