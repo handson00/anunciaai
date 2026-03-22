@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
+import { ArrowRight, UserPlus, Loader2, KeyRound } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
@@ -16,15 +16,18 @@ function formatPhone(value: string): string {
 
 export function WelcomeModal() {
   const { login, register } = useApp();
-  const [step, setStep] = useState<'phone' | 'pin' | 'register'>('phone');
+  const [step, setStep] = useState<'phone' | 'pin' | 'register' | 'recover-send' | 'recover-code' | 'recover-newpin'>('phone');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [name, setName] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const digits = phone.replace(/\D/g, '');
+
   const handlePhoneContinue = async () => {
-    const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Digite um número válido');
       return;
@@ -33,14 +36,11 @@ export function WelcomeModal() {
     setError('');
     setPin('');
 
-    // Check if user already exists via edge function (bypasses RLS)
     try {
       const { data } = await supabase.functions.invoke('verificar-telefone', {
         body: { phone: digits },
       });
-
       setSubmitting(false);
-
       if (data?.exists) {
         setStep('pin');
       } else {
@@ -59,7 +59,6 @@ export function WelcomeModal() {
     }
     setSubmitting(true);
     setError('');
-    const digits = phone.replace(/\D/g, '');
     const result = await login(digits, pin);
     setSubmitting(false);
 
@@ -70,10 +69,6 @@ export function WelcomeModal() {
     }
     if (result.error === 'blocked') {
       setError('Conta bloqueada. Contate o administrador.');
-      return;
-    }
-    if (result.error === 'wrong_pin') {
-      setError('PIN incorreto. Tente novamente.');
       return;
     }
     setError(result.error || 'Erro ao entrar');
@@ -90,12 +85,61 @@ export function WelcomeModal() {
     }
     setSubmitting(true);
     setError('');
-    const digits = phone.replace(/\D/g, '');
     const result = await register(digits, name.trim(), pin);
     setSubmitting(false);
 
     if (!result.success) {
       setError(result.error || 'Erro ao cadastrar');
+    }
+  };
+
+  const handleSendRecoveryCode = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      const { data } = await supabase.functions.invoke('recuperar-pin', {
+        body: { phone: digits },
+      });
+      setSubmitting(false);
+      if (data?.success) {
+        setStep('recover-code');
+        setSuccess('Código enviado para seu WhatsApp!');
+      } else {
+        setError(data?.error || 'Erro ao enviar código');
+      }
+    } catch {
+      setSubmitting(false);
+      setError('Erro ao enviar código');
+    }
+  };
+
+  const handleVerifyAndResetPin = async () => {
+    if (recoveryCode.length < 6) {
+      setError('Digite o código de 6 dígitos');
+      return;
+    }
+    if (pin.length < 4) {
+      setError('Crie um novo PIN de 4 dígitos');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      const { data } = await supabase.functions.invoke('redefinir-pin', {
+        body: { phone: digits, code: recoveryCode, newPin: pin },
+      });
+      setSubmitting(false);
+      if (data?.success) {
+        setPin('');
+        setRecoveryCode('');
+        setSuccess('PIN redefinido com sucesso!');
+        setStep('pin');
+      } else {
+        setError(data?.error || 'Erro ao redefinir PIN');
+      }
+    } catch {
+      setSubmitting(false);
+      setError('Erro ao redefinir PIN');
     }
   };
 
@@ -152,6 +196,8 @@ export function WelcomeModal() {
               </div>
             </div>
 
+            {success && <p className="text-green-600 text-sm text-center font-medium">{success}</p>}
+
             <div className="flex flex-col items-center space-y-3">
               <InputOTP
                 maxLength={4}
@@ -169,11 +215,109 @@ export function WelcomeModal() {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" size="lg" onClick={() => { setStep('phone'); setError(''); setPin(''); }} className="flex-1">
+              <Button variant="outline" size="lg" onClick={() => { setStep('phone'); setError(''); setPin(''); setSuccess(''); }} className="flex-1">
                 Voltar
               </Button>
               <Button variant="cta" size="lg" className="flex-1" onClick={handlePinLogin} disabled={submitting || pin.length < 4}>
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Entrar <ArrowRight className="w-5 h-5" /></>}
+              </Button>
+            </div>
+
+            <button
+              type="button"
+              className="w-full text-sm text-cta hover:underline text-center"
+              onClick={() => { setError(''); setSuccess(''); setStep('recover-send'); }}
+            >
+              Esqueci meu PIN
+            </button>
+          </div>
+        ) : step === 'recover-send' ? (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-4">
+                <KeyRound className="w-7 h-7 text-accent-foreground" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Recuperar PIN</h2>
+              <p className="text-muted-foreground text-sm">
+                Vamos enviar um código de verificação para seu WhatsApp
+              </p>
+              <div className="bg-muted rounded-xl px-4 py-2 text-sm text-muted-foreground inline-block">
+                📱 {phone}
+              </div>
+            </div>
+
+            {error && <p className="text-destructive text-sm text-center">{error}</p>}
+
+            <div className="flex gap-3">
+              <Button variant="outline" size="lg" onClick={() => { setStep('pin'); setError(''); }} className="flex-1">
+                Voltar
+              </Button>
+              <Button variant="cta" size="lg" className="flex-1" onClick={handleSendRecoveryCode} disabled={submitting}>
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enviar código'}
+              </Button>
+            </div>
+          </div>
+        ) : step === 'recover-code' ? (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-4">
+                <KeyRound className="w-7 h-7 text-accent-foreground" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Novo PIN</h2>
+              <p className="text-muted-foreground text-sm">
+                Digite o código recebido no WhatsApp e crie um novo PIN
+              </p>
+              {success && <p className="text-green-600 text-sm font-medium">{success}</p>}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block text-center">Código de verificação</label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={recoveryCode}
+                    onChange={(value) => { setRecoveryCode(value); setError(''); }}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block text-center">Novo PIN de 4 dígitos</label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={4}
+                    value={pin}
+                    onChange={(value) => { setPin(value); setError(''); }}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
+
+              {error && <p className="text-destructive text-sm text-center">{error}</p>}
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" size="lg" onClick={() => { setStep('recover-send'); setError(''); setSuccess(''); setRecoveryCode(''); setPin(''); }} className="flex-1">
+                Voltar
+              </Button>
+              <Button variant="cta" size="lg" className="flex-1" onClick={handleVerifyAndResetPin} disabled={submitting || recoveryCode.length < 6 || pin.length < 4}>
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Redefinir PIN'}
               </Button>
             </div>
           </div>
