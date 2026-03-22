@@ -117,7 +117,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password: pin,
+      password: `${cleanPhone}_${pin}`,
     });
 
     if (error) {
