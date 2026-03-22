@@ -61,9 +61,8 @@ export function WelcomeModal() {
     setSubmitting(false);
 
     if (result.success) return;
-    if (result.error === 'not_found') {
-      setPin('');
-      setStep('register');
+    if (result.error === 'not_found' || result.error === 'wrong_pin') {
+      setError('PIN incorreto. Tente novamente.');
       return;
     }
     if (result.error === 'blocked') {
