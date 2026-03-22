@@ -46,6 +46,7 @@ export function WelcomeModal() {
 
     if (result.success) return;
     if (result.error === 'not_found') {
+      setPin('');
       setStep('register');
       return;
     }
