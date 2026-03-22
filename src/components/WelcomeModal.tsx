@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
@@ -22,15 +23,30 @@ export function WelcomeModal() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handlePhoneContinue = () => {
+  const handlePhoneContinue = async () => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Digite um número válido');
       return;
     }
+    setSubmitting(true);
     setError('');
     setPin('');
-    setStep('pin');
+
+    // Check if user already exists
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('phone', digits)
+      .maybeSingle();
+
+    setSubmitting(false);
+
+    if (profile) {
+      setStep('pin');
+    } else {
+      setStep('register');
+    }
   };
 
   const handlePinLogin = async () => {
@@ -45,9 +61,8 @@ export function WelcomeModal() {
     setSubmitting(false);
 
     if (result.success) return;
-    if (result.error === 'not_found') {
-      setPin('');
-      setStep('register');
+    if (result.error === 'not_found' || result.error === 'wrong_pin') {
+      setError('PIN incorreto. Tente novamente.');
       return;
     }
     if (result.error === 'blocked') {
@@ -118,7 +133,7 @@ export function WelcomeModal() {
               onClick={handlePhoneContinue}
               disabled={submitting}
             >
-              Continuar <ArrowRight className="w-5 h-5" />
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continuar <ArrowRight className="w-5 h-5" /></>}
             </Button>
           </div>
         ) : step === 'pin' ? (
