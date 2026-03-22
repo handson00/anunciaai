@@ -33,18 +33,21 @@ export function WelcomeModal() {
     setError('');
     setPin('');
 
-    // Check if user already exists
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('phone', digits)
-      .maybeSingle();
+    // Check if user already exists via edge function (bypasses RLS)
+    try {
+      const { data } = await supabase.functions.invoke('verificar-telefone', {
+        body: { phone: digits },
+      });
 
-    setSubmitting(false);
+      setSubmitting(false);
 
-    if (profile) {
-      setStep('pin');
-    } else {
+      if (data?.exists) {
+        setStep('pin');
+      } else {
+        setStep('register');
+      }
+    } catch {
+      setSubmitting(false);
       setStep('register');
     }
   };
