@@ -78,7 +78,9 @@ Deno.serve(async (req) => {
 
     const message = `🔐 *anunciaAI - Recuperação de PIN*\n\nSeu código de recuperação é: *${code}*\n\nEste código expira em 10 minutos.\n\n⚠️ Se você não solicitou, ignore esta mensagem.`;
 
-    await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
+    console.log(`Sending recovery code to ${whatsappPhone}, UazAPI URL: ${uazapiUrl}`);
+
+    const whatsappResponse = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -86,6 +88,16 @@ Deno.serve(async (req) => {
         message,
       }),
     });
+
+    const responseText = await whatsappResponse.text();
+    console.log(`UazAPI response status: ${whatsappResponse.status}, body: ${responseText}`);
+
+    if (!whatsappResponse.ok) {
+      console.error("UazAPI error:", whatsappResponse.status, responseText);
+      return new Response(JSON.stringify({ success: false, error: 'Erro ao enviar código via WhatsApp' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
