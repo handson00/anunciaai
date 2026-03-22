@@ -206,7 +206,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await supabase.from('ads').delete().eq('id', id);
   };
 
-  const updateProfile = async (updates: { name?: string }) => {
+  const updateProfile = async (updates: { name?: string; avatar_url?: string }) => {
     if (!authUser) return;
     await supabase.from('profiles').update(updates).eq('user_id', authUser.id);
     if (currentUser) {
