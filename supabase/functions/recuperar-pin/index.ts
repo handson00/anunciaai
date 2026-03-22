@@ -84,8 +84,8 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        phone: whatsappPhone,
-        message,
+        number: whatsappPhone,
+        text: message,
       }),
     });
 
