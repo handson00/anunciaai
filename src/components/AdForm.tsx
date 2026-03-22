@@ -292,7 +292,7 @@ export function AdForm({ category, onBack }: Props) {
           Voltar
         </Button>
         <Button variant="cta" size="lg" className="flex-1" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /> Publicar</>}
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /> Salvar</>}
         </Button>
       </div>
     </div>
