@@ -139,13 +139,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { success: true };
   };
 
-  const register = async (phone: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (phone: string, name: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     const cleanPhone = phone.replace(/\D/g, '');
     const email = `${cleanPhone}@anunciai.app`;
 
     const { data, error } = await supabase.auth.signUp({
       email,
-      password: cleanPhone,
+      password: pin,
       options: {
         data: { phone: cleanPhone, name },
       },
