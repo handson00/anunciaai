@@ -23,15 +23,30 @@ export function WelcomeModal() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handlePhoneContinue = () => {
+  const handlePhoneContinue = async () => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Digite um número válido');
       return;
     }
+    setSubmitting(true);
     setError('');
     setPin('');
-    setStep('pin');
+
+    // Check if user already exists
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('phone', digits)
+      .maybeSingle();
+
+    setSubmitting(false);
+
+    if (profile) {
+      setStep('pin');
+    } else {
+      setStep('register');
+    }
   };
 
   const handlePinLogin = async () => {
