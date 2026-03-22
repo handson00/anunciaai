@@ -43,8 +43,8 @@ interface AppContextType {
   loading: boolean;
   ads: Ad[];
   users: Profile[];
-  login: (phone: string) => Promise<{ success: boolean; error?: string }>;
-  register: (phone: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  login: (phone: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+  register: (phone: string, name: string, pin: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   createAd: (ad: Omit<Ad, 'id' | 'user_id' | 'created_at' | 'slug' | 'status'>) => Promise<Ad | null>;
   updateAd: (id: string, updates: Partial<Ad>) => Promise<void>;

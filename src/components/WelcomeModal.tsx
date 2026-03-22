@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
 import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -14,21 +15,33 @@ function formatPhone(value: string): string {
 
 export function WelcomeModal() {
   const { login, register } = useApp();
-  const [step, setStep] = useState<'phone' | 'register'>('phone');
+  const [step, setStep] = useState<'phone' | 'pin' | 'register'>('phone');
   const [phone, setPhone] = useState('');
+  const [pin, setPin] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handlePhoneContinue = async () => {
+  const handlePhoneContinue = () => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Digite um número válido');
       return;
     }
+    setError('');
+    setPin('');
+    setStep('pin');
+  };
+
+  const handlePinLogin = async () => {
+    if (pin.length < 4) {
+      setError('Digite os 4 dígitos do PIN');
+      return;
+    }
     setSubmitting(true);
     setError('');
-    const result = await login(digits);
+    const digits = phone.replace(/\D/g, '');
+    const result = await login(digits, pin);
     setSubmitting(false);
 
     if (result.success) return;
@@ -40,6 +53,10 @@ export function WelcomeModal() {
       setError('Conta bloqueada. Contate o administrador.');
       return;
     }
+    if (result.error === 'wrong_pin') {
+      setError('PIN incorreto. Tente novamente.');
+      return;
+    }
     setError(result.error || 'Erro ao entrar');
   };
 
@@ -48,9 +65,14 @@ export function WelcomeModal() {
       setError('Digite seu nome');
       return;
     }
+    if (pin.length < 4) {
+      setError('Crie um PIN de 4 dígitos');
+      return;
+    }
     setSubmitting(true);
     setError('');
-    const result = await register(phone, name.trim());
+    const digits = phone.replace(/\D/g, '');
+    const result = await register(digits, name.trim(), pin);
     setSubmitting(false);
 
     if (!result.success) {
@@ -95,8 +117,46 @@ export function WelcomeModal() {
               onClick={handlePhoneContinue}
               disabled={submitting}
             >
-              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continuar <ArrowRight className="w-5 h-5" /></>}
+              Continuar <ArrowRight className="w-5 h-5" />
             </Button>
+          </div>
+        ) : step === 'pin' ? (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <img src={logo} alt="anunciaAI" className="mx-auto w-16 h-16 mb-4" />
+              <h2 className="text-xl font-bold text-foreground">Digite seu PIN</h2>
+              <p className="text-muted-foreground text-sm">
+                Insira seu PIN de 4 dígitos para entrar
+              </p>
+              <div className="bg-muted rounded-xl px-4 py-2 text-sm text-muted-foreground inline-block">
+                📱 {phone}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center space-y-3">
+              <InputOTP
+                maxLength={4}
+                value={pin}
+                onChange={(value) => { setPin(value); setError(''); }}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                </InputOTPGroup>
+              </InputOTP>
+              {error && <p className="text-destructive text-sm text-center">{error}</p>}
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" size="lg" onClick={() => { setStep('phone'); setError(''); setPin(''); }} className="flex-1">
+                Voltar
+              </Button>
+              <Button variant="cta" size="lg" className="flex-1" onClick={handlePinLogin} disabled={submitting || pin.length < 4}>
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Entrar <ArrowRight className="w-5 h-5" /></>}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
@@ -106,7 +166,7 @@ export function WelcomeModal() {
               </div>
               <h2 className="text-xl font-bold text-foreground">Cadastro rápido</h2>
               <p className="text-muted-foreground text-sm">
-                Só precisamos do seu nome para começar
+                Preencha seus dados e crie um PIN de 4 dígitos
               </p>
             </div>
 
@@ -124,11 +184,28 @@ export function WelcomeModal() {
                 className="h-13 text-base rounded-xl border-2 border-input focus:border-primary"
                 autoFocus
               />
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block text-center">Crie seu PIN</label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={4}
+                    value={pin}
+                    onChange={(value) => { setPin(value); setError(''); }}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
               {error && <p className="text-destructive text-sm text-center">{error}</p>}
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" size="lg" onClick={() => { setStep('phone'); setError(''); }} className="flex-1">
+              <Button variant="outline" size="lg" onClick={() => { setStep('phone'); setError(''); setPin(''); }} className="flex-1">
                 Voltar
               </Button>
               <Button variant="cta" size="lg" className="flex-1" onClick={handleRegister} disabled={submitting}>
