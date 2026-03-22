@@ -145,7 +145,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase.auth.signUp({
       email,
-      password: pin,
+      password: `${cleanPhone}_${pin}`,
       options: {
         data: { phone: cleanPhone, name },
       },
