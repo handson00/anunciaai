@@ -43,8 +43,8 @@ interface AppContextType {
   loading: boolean;
   ads: Ad[];
   users: Profile[];
-  login: (phone: string) => Promise<{ success: boolean; error?: string }>;
-  register: (phone: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  login: (phone: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+  register: (phone: string, name: string, pin: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   createAd: (ad: Omit<Ad, 'id' | 'user_id' | 'created_at' | 'slug' | 'status'>) => Promise<Ad | null>;
   updateAd: (id: string, updates: Partial<Ad>) => Promise<void>;
@@ -111,17 +111,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const login = async (phone: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (phone: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     const cleanPhone = phone.replace(/\D/g, '');
     const email = `${cleanPhone}@anunciai.app`;
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password: cleanPhone,
+      password: `${cleanPhone}_${pin}`,
     });
 
     if (error) {
       if (error.message.includes('Invalid login')) {
+        // Could be wrong PIN or user doesn't exist — try to distinguish
         return { success: false, error: 'not_found' };
       }
       return { success: false, error: error.message };
@@ -138,13 +139,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { success: true };
   };
 
-  const register = async (phone: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (phone: string, name: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     const cleanPhone = phone.replace(/\D/g, '');
     const email = `${cleanPhone}@anunciai.app`;
 
     const { data, error } = await supabase.auth.signUp({
       email,
-      password: cleanPhone,
+      password: `${cleanPhone}_${pin}`,
       options: {
         data: { phone: cleanPhone, name },
       },
