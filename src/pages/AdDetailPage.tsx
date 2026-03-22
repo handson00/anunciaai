@@ -220,7 +220,13 @@ export default function AdDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-10">
         <div className="container max-w-lg mx-auto flex gap-3">
           {canPublish && (
-            <Button variant="cta" size="lg" className="flex-1" onClick={handlePublish} disabled={publishing}>
+            <Button
+              variant="cta"
+              size="lg"
+              className={`flex-1 ${ad.status !== 'published' ? 'animate-[pulse-cta_2s_ease-in-out_infinite]' : ''}`}
+              onClick={handlePublish}
+              disabled={publishing}
+            >
               {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> {ad.status === 'published' ? 'Republicar' : 'Publicar nos grupos'}</>}
             </Button>
           )}
