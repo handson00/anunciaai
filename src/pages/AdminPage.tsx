@@ -380,7 +380,32 @@ export default function AdminPage() {
 
                 {expandedUser === user.user_id && (
                   <div className="border-t px-4 pb-4 pt-3 space-y-3">
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async () => {
+                          if (!confirm(`Excluir o anunciante "${user.name}"? Todos os anúncios dele serão apagados e ele poderá se cadastrar novamente.`)) return;
+                          try {
+                            const { data, error } = await supabase.functions.invoke('excluir-anunciante', {
+                              body: { user_id: user.user_id },
+                            });
+                            if (error || data?.error) {
+                              toast.error(data?.error || error?.message || 'Erro ao excluir');
+                              return;
+                            }
+                            toast.success('Anunciante excluído');
+                            fetchUsers();
+                            fetchAds();
+                            setExpandedUser(null);
+                          } catch {
+                            toast.error('Erro ao excluir anunciante');
+                          }
+                        }}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" /> Excluir
+                      </Button>
                       <Button
                         variant={user.blocked ? 'outline' : 'ghost'}
                         size="sm"
