@@ -50,7 +50,7 @@ interface AppContextType {
   createAd: (ad: Omit<Ad, 'id' | 'user_id' | 'created_at' | 'slug' | 'status'>) => Promise<Ad | null>;
   updateAd: (id: string, updates: Partial<Ad>) => Promise<void>;
   deleteAd: (id: string) => Promise<void>;
-  updateProfile: (updates: { name?: string }) => Promise<void>;
+  updateProfile: (updates: { name?: string; avatar_url?: string }) => Promise<void>;
   getAdBySlug: (slug: string) => Promise<Ad | null>;
   getUserAds: () => Promise<Ad[]>;
   fetchAds: () => Promise<void>;
