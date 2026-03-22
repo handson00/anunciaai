@@ -111,17 +111,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const login = async (phone: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (phone: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     const cleanPhone = phone.replace(/\D/g, '');
     const email = `${cleanPhone}@anunciai.app`;
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password: cleanPhone,
+      password: pin,
     });
 
     if (error) {
       if (error.message.includes('Invalid login')) {
+        // Could be wrong PIN or user doesn't exist — try to distinguish
         return { success: false, error: 'not_found' };
       }
       return { success: false, error: error.message };
