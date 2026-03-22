@@ -95,6 +95,10 @@ export default {
           "0%": { transform: "translateY(100%)" },
           "100%": { transform: "translateY(0)" },
         },
+        "pulse-cta": {
+          "0%, 100%": { opacity: "1", boxShadow: "0 0 0 0 hsl(var(--cta) / 0.4)" },
+          "50%": { opacity: "0.85", boxShadow: "0 0 0 8px hsl(var(--cta) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
