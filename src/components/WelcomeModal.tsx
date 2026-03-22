@@ -46,6 +46,7 @@ export function WelcomeModal() {
 
     if (result.success) return;
     if (result.error === 'not_found') {
+      setPin('');
       setStep('register');
       return;
     }
@@ -168,6 +169,9 @@ export function WelcomeModal() {
               <p className="text-muted-foreground text-sm">
                 Preencha seus dados e crie um PIN de 4 dígitos
               </p>
+              <div className="bg-cta/10 text-cta rounded-xl px-4 py-2.5 text-xs font-medium">
+                🔒 Crie um PIN para proteger sua conta. Você vai usá-lo sempre que entrar no app.
+              </div>
             </div>
 
             <div className="space-y-3">
