@@ -133,7 +133,7 @@ export function WelcomeModal() {
               onClick={handlePhoneContinue}
               disabled={submitting}
             >
-              Continuar <ArrowRight className="w-5 h-5" />
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continuar <ArrowRight className="w-5 h-5" /></>}
             </Button>
           </div>
         ) : step === 'pin' ? (
