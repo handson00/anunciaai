@@ -4,8 +4,6 @@ import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
-import { ArrowRight, UserPlus, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
