@@ -60,9 +60,18 @@ export function Dashboard() {
       </header>
 
       <div className="container max-w-lg mx-auto px-4 py-6 space-y-6">
-        <div className="animate-fade-in-up">
-          <p className="text-muted-foreground text-sm">Olá,</p>
-          <h2 className="text-2xl font-bold text-foreground">{currentUser.name} 👋</h2>
+        <div className="animate-fade-in-up flex items-center gap-4">
+          {currentUser.avatar_url ? (
+            <img src={currentUser.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-border flex-shrink-0" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground flex-shrink-0 border-2 border-border">
+              {currentUser.name.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <p className="text-muted-foreground text-sm">Olá,</p>
+            <h2 className="text-2xl font-bold text-foreground">{currentUser.name} 👋</h2>
+          </div>
         </div>
 
         <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
