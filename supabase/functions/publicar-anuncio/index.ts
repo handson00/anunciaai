@@ -199,6 +199,54 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Post to WhatsApp Status (Stories) if enabled
+    const postToStatus = settingsMap['post_to_status'];
+    if (postToStatus === 'true' && uazapiUrl && uazapiToken) {
+      try {
+        console.log('Posting to WhatsApp Status...');
+        const statusCaption = [
+          `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
+          '',
+          `📦 ${ad.title}`,
+          `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+          ad.region ? `📍 ${ad.region}` : '',
+          '',
+          `📝 ${ad.description.substring(0, 200)}${ad.description.length > 200 ? '...' : ''}`,
+          '',
+          `🔗 ${siteUrl}/ad/${ad.slug}`,
+        ].filter(Boolean).join('\n');
+
+        let statusResponse;
+        if (!photoUrl.startsWith('data:') && !photoUrl.startsWith('blob:')) {
+          // Send image status
+          statusResponse = await fetch(`${uazapiUrl}/send/image-status?token=${uazapiToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file: photoUrl,
+              text: statusCaption,
+              type: 'image',
+            }),
+          });
+        } else {
+          // Fallback: text-only status
+          statusResponse = await fetch(`${uazapiUrl}/send/text-status?token=${uazapiToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: statusCaption,
+            }),
+          });
+        }
+
+        const statusResult = await statusResponse.json();
+        console.log('Status post result:', JSON.stringify(statusResult).substring(0, 200));
+      } catch (statusErr: any) {
+        console.error('Error posting to Status:', statusErr.message);
+        // Don't fail the whole publish if status posting fails
+      }
+    }
+
     // Update ad status
     const finalStatus = allSuccess ? 'published' : 'error';
     await supabase.from('ads').update({ status: finalStatus }).eq('id', anuncio_id);
