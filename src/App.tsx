@@ -40,14 +40,15 @@ const App = () => (
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<MarketplacePage />} />
+              <Route path="/login" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/create-ad" element={<CreateAdPage />} />
               <Route path="/my-ads" element={<MyAdsPage />} />
               <Route path="/ad/:slug" element={<AdDetailPage />} />
               <Route path="/edit-profile" element={<EditProfilePage />} />
               <Route path="/admin" element={<AdminPage />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
