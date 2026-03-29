@@ -48,7 +48,7 @@ const App = () => (
               <Route path="/ad/:slug" element={<AdDetailPage />} />
               <Route path="/edit-profile" element={<EditProfilePage />} />
               <Route path="/admin" element={<AdminPage />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
