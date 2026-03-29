@@ -237,7 +237,10 @@ export default function AdDetailPage() {
               </Button>
               {!isOwner && (
                 <Button variant="cta" size="lg" className="flex-1"
-                  onClick={() => window.open(`https://wa.me/55${ad.contact_phone}`, '_blank')}>
+                  onClick={() => {
+                    const msg = encodeURIComponent(`Olá! Vi seu anúncio "${ad.title}" na plataforma anunciaAI e gostaria de saber se ainda está disponível. 😊`);
+                    window.open(`https://wa.me/55${ad.contact_phone}?text=${msg}`, '_blank');
+                  }}>
                   <Phone className="w-5 h-5" /> Contato
                 </Button>
               )}
