@@ -43,6 +43,7 @@ export default function AdminPage() {
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'connected' | 'error'>('idle');
   const [connectionInfo, setConnectionInfo] = useState<string>('');
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [postToStatus, setPostToStatus] = useState(false);
 
   useEffect(() => {
     if (currentUser?.is_admin) {
@@ -54,13 +55,14 @@ export default function AdminPage() {
   }, [currentUser]);
 
   const loadSettings = async () => {
-    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url']);
+    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status']);
     let hasUrl = false, hasToken = false;
     if (data) {
       for (const s of data) {
         if (s.key === 'uazapi_server_url') { setSettingsUrl(s.value); hasUrl = true; }
         if (s.key === 'uazapi_instance_token') { setSettingsToken(s.value); hasToken = true; }
         if (s.key === 'webhook_url') setWebhookUrl(s.value);
+        if (s.key === 'post_to_status') setPostToStatus(s.value === 'true');
       }
     }
     if (hasUrl && hasToken) {
@@ -95,6 +97,7 @@ export default function AdminPage() {
         { key: 'uazapi_server_url', value: settingsUrl.trim() },
         { key: 'uazapi_instance_token', value: settingsToken.trim() },
         { key: 'webhook_url', value: webhookUrl.trim() },
+        { key: 'post_to_status', value: postToStatus ? 'true' : 'false' },
       ]) {
         if (!value) continue;
         const { data: existing } = await supabase.from('app_settings').select('id').eq('key', key).single();
@@ -629,6 +632,26 @@ export default function AdminPage() {
                 <Save className="w-4 h-4" />
                 {savingSettings ? 'Salvando...' : 'Salvar configurações'}
               </Button>
+            </div>
+
+            {/* Post to Status Toggle */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">📱 Postar no Status do WhatsApp</h3>
+              <p className="text-xs text-muted-foreground">
+                Ao publicar um anúncio, ele também será postado no Status (Stories) do WhatsApp para que todos que têm seu número salvo possam ver.
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">{postToStatus ? 'Ativado' : 'Desativado'}</span>
+                <button
+                  onClick={() => setPostToStatus(!postToStatus)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${postToStatus ? 'bg-cta' : 'bg-muted'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${postToStatus ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                ⚠️ Lembre-se de salvar as configurações após alterar esta opção.
+              </p>
             </div>
 
             {/* Connection Status */}
