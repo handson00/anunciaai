@@ -56,7 +56,7 @@ export default function MarketplacePage() {
               <span className="text-cta">anunci</span>AI
             </h1>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
             <LogIn className="w-4 h-4 mr-1" /> Entrar
           </Button>
         </div>
