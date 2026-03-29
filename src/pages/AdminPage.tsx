@@ -634,6 +634,26 @@ export default function AdminPage() {
               </Button>
             </div>
 
+            {/* Post to Status Toggle */}
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">📱 Postar no Status do WhatsApp</h3>
+              <p className="text-xs text-muted-foreground">
+                Ao publicar um anúncio, ele também será postado no Status (Stories) do WhatsApp para que todos que têm seu número salvo possam ver.
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">{postToStatus ? 'Ativado' : 'Desativado'}</span>
+                <button
+                  onClick={() => setPostToStatus(!postToStatus)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${postToStatus ? 'bg-cta' : 'bg-muted'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${postToStatus ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                ⚠️ Lembre-se de salvar as configurações após alterar esta opção.
+              </p>
+            </div>
+
             {/* Connection Status */}
             <div className="bg-card border rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
