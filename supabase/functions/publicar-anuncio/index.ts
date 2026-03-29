@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     };
 
     // Read settings from app_settings (priority) or env vars (fallback)
-    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'site_url']);
+    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'site_url', 'post_to_status']);
     const settingsMap: Record<string, string> = {};
     if (settings) for (const s of settings) settingsMap[s.key] = s.value;
 
