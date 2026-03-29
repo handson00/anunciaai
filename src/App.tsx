@@ -13,6 +13,7 @@ const AdDetailPage = lazy(() => import("./pages/AdDetailPage"));
 const EditProfilePage = lazy(() => import("./pages/EditProfilePage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/ad/:slug" element={<AdDetailPage />} />
               <Route path="/edit-profile" element={<EditProfilePage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
