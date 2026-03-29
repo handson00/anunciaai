@@ -55,7 +55,7 @@ export default function AdminPage() {
   }, [currentUser]);
 
   const loadSettings = async () => {
-    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url']);
+    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status']);
     let hasUrl = false, hasToken = false;
     if (data) {
       for (const s of data) {
