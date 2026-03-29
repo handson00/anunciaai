@@ -62,6 +62,7 @@ export default function AdminPage() {
         if (s.key === 'uazapi_server_url') { setSettingsUrl(s.value); hasUrl = true; }
         if (s.key === 'uazapi_instance_token') { setSettingsToken(s.value); hasToken = true; }
         if (s.key === 'webhook_url') setWebhookUrl(s.value);
+        if (s.key === 'post_to_status') setPostToStatus(s.value === 'true');
       }
     }
     if (hasUrl && hasToken) {
