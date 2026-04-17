@@ -16,6 +16,7 @@ export interface Profile {
   blocked: boolean;
   created_at: string;
   avatar_url?: string | null;
+  store_name?: string | null;
 }
 
 export interface Ad {
@@ -50,7 +51,7 @@ interface AppContextType {
   createAd: (ad: Omit<Ad, 'id' | 'user_id' | 'created_at' | 'slug' | 'status'>) => Promise<Ad | null>;
   updateAd: (id: string, updates: Partial<Ad>) => Promise<void>;
   deleteAd: (id: string) => Promise<void>;
-  updateProfile: (updates: { name?: string; avatar_url?: string }) => Promise<void>;
+  updateProfile: (updates: { name?: string; avatar_url?: string; store_name?: string }) => Promise<void>;
   getAdBySlug: (slug: string) => Promise<Ad | null>;
   getUserAds: () => Promise<Ad[]>;
   fetchAds: () => Promise<void>;
@@ -207,7 +208,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await supabase.from('ads').delete().eq('id', id);
   };
 
-  const updateProfile = async (updates: { name?: string; avatar_url?: string }) => {
+  const updateProfile = async (updates: { name?: string; avatar_url?: string; store_name?: string }) => {
     if (!authUser) return;
     await supabase.from('profiles').update(updates).eq('user_id', authUser.id);
     if (currentUser) {

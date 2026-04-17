@@ -128,6 +128,7 @@ export type Database = {
           is_admin: boolean
           name: string
           phone: string
+          store_name: string | null
           updated_at: string
           user_id: string
         }
@@ -139,6 +140,7 @@ export type Database = {
           is_admin?: boolean
           name: string
           phone: string
+          store_name?: string | null
           updated_at?: string
           user_id: string
         }
@@ -150,6 +152,7 @@ export type Database = {
           is_admin?: boolean
           name?: string
           phone?: string
+          store_name?: string | null
           updated_at?: string
           user_id?: string
         }
