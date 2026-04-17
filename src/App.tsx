@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 
 const Dashboard = lazy(() => import("./components/Dashboard").then(m => ({ default: m.Dashboard })));
 const CreateAdPage = lazy(() => import("./pages/CreateAdPage"));
+const EditAdPage = lazy(() => import("./pages/EditAdPage"));
 const MyAdsPage = lazy(() => import("./pages/MyAdsPage"));
 const AdDetailPage = lazy(() => import("./pages/AdDetailPage"));
 const EditProfilePage = lazy(() => import("./pages/EditProfilePage"));
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/login" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/create-ad" element={<CreateAdPage />} />
+              <Route path="/edit-ad/:slug" element={<EditAdPage />} />
               <Route path="/my-ads" element={<MyAdsPage />} />
               <Route path="/ad/:slug" element={<AdDetailPage />} />
               <Route path="/edit-profile" element={<EditProfilePage />} />

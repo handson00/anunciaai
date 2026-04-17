@@ -1,16 +1,18 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AdCategory, useApp } from '@/contexts/AppContext';
+import { AdCategory, useApp, Ad } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Camera, Plus, X, Check, Loader2 } from 'lucide-react';
+import { Camera, Plus, X, Check, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
   category: AdCategory;
   onBack: () => void;
+  /** When provided, the form runs in edit mode instead of create. */
+  ad?: Ad;
 }
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -27,21 +29,31 @@ function formatPhone(value: string): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
-export function AdForm({ category, onBack }: Props) {
-  const { createAd, currentUser } = useApp();
+function formatPriceFromNumber(num: number): string {
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+export function AdForm({ category, onBack, ad }: Props) {
+  const { createAd, updateAd, currentUser } = useApp();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [condition, setCondition] = useState<'new' | 'used' | ''>('');
-  const [brand, setBrand] = useState('');
-  const [region, setRegion] = useState('');
+  const isEdit = !!ad;
+
+  const [title, setTitle] = useState(ad?.title || '');
+  const [description, setDescription] = useState(ad?.description || '');
+  const [price, setPrice] = useState(ad ? formatPriceFromNumber(Number(ad.price)) : '');
+  const [condition, setCondition] = useState<'new' | 'used' | ''>(ad?.condition || '');
+  const [brand, setBrand] = useState(ad?.brand || '');
+  const [region, setRegion] = useState(ad?.region || '');
   const [contactPhone, setContactPhone] = useState(
-    currentUser ? formatPhone(currentUser.phone) : ''
+    ad ? formatPhone(ad.contact_phone) : (currentUser ? formatPhone(currentUser.phone) : '')
   );
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  // Existing remote photo URLs (edit mode). First item is the main photo.
+  const [existingPhotos, setExistingPhotos] = useState<string[]>(
+    ad ? [ad.main_photo, ...(ad.photos || [])] : []
+  );
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,9 +73,13 @@ export function AdForm({ category, onBack }: Props) {
     });
   };
 
-  const removePhoto = (index: number) => {
+  const removeNewPhoto = (index: number) => {
     setPhotoFiles(prev => prev.filter((_, i) => i !== index));
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingPhoto = (index: number) => {
+    setExistingPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const uploadPhotos = async (): Promise<string[]> => {
@@ -87,7 +103,8 @@ export function AdForm({ category, onBack }: Props) {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
     if (!price.trim()) { toast.error('Digite o valor'); return; }
-    if (photoPreviews.length === 0) { toast.error('Adicione pelo menos uma foto'); return; }
+    const totalPhotos = existingPhotos.length + photoPreviews.length;
+    if (totalPhotos === 0) { toast.error('Adicione pelo menos uma foto'); return; }
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
     if (showCondition && !condition) { toast.error('Selecione a condição'); return; }
 
@@ -96,25 +113,45 @@ export function AdForm({ category, onBack }: Props) {
     setSubmitting(true);
     try {
       const uploadedUrls = await uploadPhotos();
-      const ad = await createAd({
-        category,
-        title: title.trim(),
-        description: description.trim(),
-        price: priceNum,
-        condition: condition || undefined,
-        brand: brand.trim() || undefined,
-        region: region.trim() || undefined,
-        main_photo: uploadedUrls[0],
-        photos: uploadedUrls.slice(1),
-        contact_phone: contactPhone.replace(/\D/g, ''),
-      });
-      setSubmitting(false);
+      const allUrls = [...existingPhotos, ...uploadedUrls];
 
-      if (ad) {
-        toast.success('Anúncio criado com sucesso!');
+      if (isEdit && ad) {
+        await updateAd(ad.id, {
+          category,
+          title: title.trim(),
+          description: description.trim(),
+          price: priceNum,
+          condition: condition || null,
+          brand: brand.trim() || null,
+          region: region.trim() || null,
+          main_photo: allUrls[0],
+          photos: allUrls.slice(1),
+          contact_phone: contactPhone.replace(/\D/g, ''),
+        });
+        setSubmitting(false);
+        toast.success('Anúncio atualizado!');
         navigate(`/ad/${ad.slug}`);
       } else {
-        toast.error('Erro ao criar anúncio');
+        const created = await createAd({
+          category,
+          title: title.trim(),
+          description: description.trim(),
+          price: priceNum,
+          condition: condition || undefined,
+          brand: brand.trim() || undefined,
+          region: region.trim() || undefined,
+          main_photo: allUrls[0],
+          photos: allUrls.slice(1),
+          contact_phone: contactPhone.replace(/\D/g, ''),
+        });
+        setSubmitting(false);
+
+        if (created) {
+          toast.success('Anúncio criado com sucesso!');
+          navigate(`/ad/${created.slug}`);
+        } else {
+          toast.error('Erro ao criar anúncio');
+        }
       }
     } catch {
       setSubmitting(false);
@@ -133,9 +170,11 @@ export function AdForm({ category, onBack }: Props) {
     <div className="space-y-5 animate-fade-in-up">
       <div className="text-center space-y-1">
         <h2 className="text-xl font-bold text-foreground">
-          Novo anúncio — {categoryLabels[category]}
+          {isEdit ? 'Editar' : 'Novo'} anúncio — {categoryLabels[category]}
         </h2>
-        <p className="text-sm text-muted-foreground">Preencha os dados do seu anúncio</p>
+        <p className="text-sm text-muted-foreground">
+          {isEdit ? 'Atualize os dados do seu anúncio' : 'Preencha os dados do seu anúncio'}
+        </p>
       </div>
 
       {/* Photos */}
@@ -144,11 +183,11 @@ export function AdForm({ category, onBack }: Props) {
           Fotos <span className="text-destructive">*</span>
         </label>
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {photoPreviews.map((photo, i) => (
-            <div key={i} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
+          {existingPhotos.map((photo, i) => (
+            <div key={`existing-${i}`} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
               <img src={photo} alt="" className="w-full h-full object-cover" />
               <button
-                onClick={() => removePhoto(i)}
+                onClick={() => removeExistingPhoto(i)}
                 className="absolute top-0.5 right-0.5 w-5 h-5 bg-foreground/70 rounded-full flex items-center justify-center"
               >
                 <X className="w-3 h-3 text-card" />
@@ -160,6 +199,25 @@ export function AdForm({ category, onBack }: Props) {
               )}
             </div>
           ))}
+          {photoPreviews.map((photo, i) => {
+            const globalIndex = existingPhotos.length + i;
+            return (
+              <div key={`new-${i}`} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
+                <img src={photo} alt="" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => removeNewPhoto(i)}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-foreground/70 rounded-full flex items-center justify-center"
+                >
+                  <X className="w-3 h-3 text-card" />
+                </button>
+                {globalIndex === 0 && (
+                  <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[10px] text-center py-0.5">
+                    Principal
+                  </span>
+                )}
+              </div>
+            );
+          })}
           <button
             onClick={() => fileInputRef.current?.click()}
             className="flex-shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors active:scale-95"
@@ -292,7 +350,9 @@ export function AdForm({ category, onBack }: Props) {
           Voltar
         </Button>
         <Button variant="cta" size="lg" className="flex-1" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /> Salvar</>}
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+            isEdit ? <><Save className="w-5 h-5" /> Salvar alterações</> : <><Plus className="w-5 h-5" /> Salvar</>
+          )}
         </Button>
       </div>
     </div>

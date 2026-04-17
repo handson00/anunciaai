@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 
@@ -99,8 +99,19 @@ export default function MyAdsPage() {
                     </div>
                   </div>
                   <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/edit-ad/${ad.slug}`);
+                    }}
+                    className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                    aria-label="Editar anúncio"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={(e) => handleDelete(ad.id, e)}
                     className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                    aria-label="Excluir anúncio"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
