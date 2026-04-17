@@ -73,9 +73,13 @@ export function AdForm({ category, onBack, ad }: Props) {
     });
   };
 
-  const removePhoto = (index: number) => {
+  const removeNewPhoto = (index: number) => {
     setPhotoFiles(prev => prev.filter((_, i) => i !== index));
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingPhoto = (index: number) => {
+    setExistingPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const uploadPhotos = async (): Promise<string[]> => {
@@ -99,7 +103,8 @@ export function AdForm({ category, onBack, ad }: Props) {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
     if (!price.trim()) { toast.error('Digite o valor'); return; }
-    if (photoPreviews.length === 0) { toast.error('Adicione pelo menos uma foto'); return; }
+    const totalPhotos = existingPhotos.length + photoPreviews.length;
+    if (totalPhotos === 0) { toast.error('Adicione pelo menos uma foto'); return; }
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
     if (showCondition && !condition) { toast.error('Selecione a condição'); return; }
 
@@ -108,25 +113,45 @@ export function AdForm({ category, onBack, ad }: Props) {
     setSubmitting(true);
     try {
       const uploadedUrls = await uploadPhotos();
-      const ad = await createAd({
-        category,
-        title: title.trim(),
-        description: description.trim(),
-        price: priceNum,
-        condition: condition || undefined,
-        brand: brand.trim() || undefined,
-        region: region.trim() || undefined,
-        main_photo: uploadedUrls[0],
-        photos: uploadedUrls.slice(1),
-        contact_phone: contactPhone.replace(/\D/g, ''),
-      });
-      setSubmitting(false);
+      const allUrls = [...existingPhotos, ...uploadedUrls];
 
-      if (ad) {
-        toast.success('Anúncio criado com sucesso!');
+      if (isEdit && ad) {
+        await updateAd(ad.id, {
+          category,
+          title: title.trim(),
+          description: description.trim(),
+          price: priceNum,
+          condition: condition || null,
+          brand: brand.trim() || null,
+          region: region.trim() || null,
+          main_photo: allUrls[0],
+          photos: allUrls.slice(1),
+          contact_phone: contactPhone.replace(/\D/g, ''),
+        });
+        setSubmitting(false);
+        toast.success('Anúncio atualizado!');
         navigate(`/ad/${ad.slug}`);
       } else {
-        toast.error('Erro ao criar anúncio');
+        const created = await createAd({
+          category,
+          title: title.trim(),
+          description: description.trim(),
+          price: priceNum,
+          condition: condition || undefined,
+          brand: brand.trim() || undefined,
+          region: region.trim() || undefined,
+          main_photo: allUrls[0],
+          photos: allUrls.slice(1),
+          contact_phone: contactPhone.replace(/\D/g, ''),
+        });
+        setSubmitting(false);
+
+        if (created) {
+          toast.success('Anúncio criado com sucesso!');
+          navigate(`/ad/${created.slug}`);
+        } else {
+          toast.error('Erro ao criar anúncio');
+        }
       }
     } catch {
       setSubmitting(false);
