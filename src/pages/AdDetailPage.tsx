@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -125,6 +125,11 @@ export default function AdDetailPage() {
           </Button>
           <div className="flex items-center gap-2">
             <span className={`text-xs px-2 py-1 rounded-full font-medium ${st.class}`}>{st.label}</span>
+            {isOwner && (
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/edit-ad/${ad.slug}`)} aria-label="Editar anúncio">
+                <Pencil className="w-5 h-5" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={handleCopyLink}>
               {copied ? <Check className="w-5 h-5 text-cta" /> : <Copy className="w-5 h-5" />}
             </Button>
