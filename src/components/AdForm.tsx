@@ -170,9 +170,11 @@ export function AdForm({ category, onBack, ad }: Props) {
     <div className="space-y-5 animate-fade-in-up">
       <div className="text-center space-y-1">
         <h2 className="text-xl font-bold text-foreground">
-          Novo anúncio — {categoryLabels[category]}
+          {isEdit ? 'Editar' : 'Novo'} anúncio — {categoryLabels[category]}
         </h2>
-        <p className="text-sm text-muted-foreground">Preencha os dados do seu anúncio</p>
+        <p className="text-sm text-muted-foreground">
+          {isEdit ? 'Atualize os dados do seu anúncio' : 'Preencha os dados do seu anúncio'}
+        </p>
       </div>
 
       {/* Photos */}
@@ -181,11 +183,11 @@ export function AdForm({ category, onBack, ad }: Props) {
           Fotos <span className="text-destructive">*</span>
         </label>
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {photoPreviews.map((photo, i) => (
-            <div key={i} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
+          {existingPhotos.map((photo, i) => (
+            <div key={`existing-${i}`} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
               <img src={photo} alt="" className="w-full h-full object-cover" />
               <button
-                onClick={() => removePhoto(i)}
+                onClick={() => removeExistingPhoto(i)}
                 className="absolute top-0.5 right-0.5 w-5 h-5 bg-foreground/70 rounded-full flex items-center justify-center"
               >
                 <X className="w-3 h-3 text-card" />
@@ -197,6 +199,25 @@ export function AdForm({ category, onBack, ad }: Props) {
               )}
             </div>
           ))}
+          {photoPreviews.map((photo, i) => {
+            const globalIndex = existingPhotos.length + i;
+            return (
+              <div key={`new-${i}`} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border">
+                <img src={photo} alt="" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => removeNewPhoto(i)}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-foreground/70 rounded-full flex items-center justify-center"
+                >
+                  <X className="w-3 h-3 text-card" />
+                </button>
+                {globalIndex === 0 && (
+                  <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[10px] text-center py-0.5">
+                    Principal
+                  </span>
+                )}
+              </div>
+            );
+          })}
           <button
             onClick={() => fileInputRef.current?.click()}
             className="flex-shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors active:scale-95"
@@ -329,7 +350,9 @@ export function AdForm({ category, onBack, ad }: Props) {
           Voltar
         </Button>
         <Button variant="cta" size="lg" className="flex-1" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /> Salvar</>}
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+            isEdit ? <><Save className="w-5 h-5" /> Salvar alterações</> : <><Plus className="w-5 h-5" /> Salvar</>
+          )}
         </Button>
       </div>
     </div>
