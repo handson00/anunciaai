@@ -32,7 +32,23 @@ export default function MarketplacePage() {
       .select('*')
       .eq('status', 'published')
       .order('created_at', { ascending: false });
-    setAds((data || []) as Ad[]);
+
+    const adsList = (data || []) as Ad[];
+
+    // Fetch advertiser names
+    const userIds = Array.from(new Set(adsList.map(a => a.user_id)));
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name')
+        .in('user_id', userIds);
+      const nameMap = new Map((profiles || []).map(p => [p.user_id, p.name]));
+      adsList.forEach(ad => {
+        ad.user_name = nameMap.get(ad.user_id) || 'Anunciante';
+      });
+    }
+
+    setAds(adsList);
     setLoading(false);
   };
 
@@ -136,6 +152,9 @@ export default function MarketplacePage() {
                   <p className="text-cta font-bold text-base">
                     R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
+                  {ad.user_name && (
+                    <p className="text-xs text-muted-foreground truncate">👤 {ad.user_name}</p>
+                  )}
                   {ad.region && (
                     <p className="text-xs text-muted-foreground">📍 {ad.region}</p>
                   )}
