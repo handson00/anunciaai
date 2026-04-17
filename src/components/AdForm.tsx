@@ -1,16 +1,18 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AdCategory, useApp } from '@/contexts/AppContext';
+import { AdCategory, useApp, Ad } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Camera, Plus, X, Check, Loader2 } from 'lucide-react';
+import { Camera, Plus, X, Check, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
   category: AdCategory;
   onBack: () => void;
+  /** When provided, the form runs in edit mode instead of create. */
+  ad?: Ad;
 }
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -27,21 +29,31 @@ function formatPhone(value: string): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
-export function AdForm({ category, onBack }: Props) {
-  const { createAd, currentUser } = useApp();
+function formatPriceFromNumber(num: number): string {
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+export function AdForm({ category, onBack, ad }: Props) {
+  const { createAd, updateAd, currentUser } = useApp();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [condition, setCondition] = useState<'new' | 'used' | ''>('');
-  const [brand, setBrand] = useState('');
-  const [region, setRegion] = useState('');
+  const isEdit = !!ad;
+
+  const [title, setTitle] = useState(ad?.title || '');
+  const [description, setDescription] = useState(ad?.description || '');
+  const [price, setPrice] = useState(ad ? formatPriceFromNumber(Number(ad.price)) : '');
+  const [condition, setCondition] = useState<'new' | 'used' | ''>(ad?.condition || '');
+  const [brand, setBrand] = useState(ad?.brand || '');
+  const [region, setRegion] = useState(ad?.region || '');
   const [contactPhone, setContactPhone] = useState(
-    currentUser ? formatPhone(currentUser.phone) : ''
+    ad ? formatPhone(ad.contact_phone) : (currentUser ? formatPhone(currentUser.phone) : '')
   );
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  // Existing remote photo URLs (edit mode). First item is the main photo.
+  const [existingPhotos, setExistingPhotos] = useState<string[]>(
+    ad ? [ad.main_photo, ...(ad.photos || [])] : []
+  );
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
