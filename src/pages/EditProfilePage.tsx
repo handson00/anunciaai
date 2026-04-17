@@ -11,6 +11,7 @@ export default function EditProfilePage() {
   const { currentUser, authUser, updateProfile } = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState(currentUser?.name || '');
+  const [storeName, setStoreName] = useState(currentUser?.store_name || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar_url || '');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -57,7 +58,11 @@ export default function EditProfilePage() {
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Digite seu nome'); return; }
     setSaving(true);
-    await updateProfile({ name: name.trim(), avatar_url: avatarUrl || undefined });
+    await updateProfile({
+      name: name.trim(),
+      avatar_url: avatarUrl || undefined,
+      store_name: storeName.trim() || undefined,
+    });
     setSaving(false);
     toast.success('Dados atualizados!');
     navigate('/dashboard');
@@ -121,6 +126,20 @@ export default function EditProfilePage() {
             className="h-12 rounded-xl"
             autoFocus
           />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-foreground mb-1.5 block">
+            Nome do vendedor / loja <span className="text-muted-foreground font-normal">(opcional)</span>
+          </label>
+          <Input
+            value={storeName}
+            onChange={e => setStoreName(e.target.value)}
+            placeholder="Ex: Loja do João"
+            className="h-12 rounded-xl"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Aparece como anunciante nos seus anúncios. Se vazio, mostra seu nome.
+          </p>
         </div>
         <Button variant="cta" size="lg" className="w-full" onClick={handleSave} disabled={saving || uploading}>
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Salvar alterações</>}
