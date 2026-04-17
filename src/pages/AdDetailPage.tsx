@@ -120,7 +120,7 @@ export default function AdDetailPage() {
     <div className="min-h-screen bg-background pb-24">
       <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-10">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(isOwner ? '/my-ads' : '/')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
