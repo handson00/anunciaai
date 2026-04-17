@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, SlidersHorizontal, LogIn } from 'lucide-react';
+import { Search, LogIn } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
@@ -15,61 +16,70 @@ const categoryFilters: { value: AdCategory | 'all'; label: string; emoji: string
   { value: 'service', label: 'Serviços', emoji: '🔧' },
 ];
 
+async function fetchPublishedAds(): Promise<Ad[]> {
+  const { data } = await supabase
+    .from('ads')
+    .select('id,user_id,category,title,description,price,condition,brand,region,main_photo,photos,contact_phone,status,created_at,slug')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false });
+
+  const adsList = (data || []) as Ad[];
+  const userIds = Array.from(new Set(adsList.map(a => a.user_id)));
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, name, store_name')
+      .in('user_id', userIds);
+    const nameMap = new Map(
+      (profiles || []).map(p => [p.user_id, (p as any).store_name || p.name])
+    );
+    adsList.forEach(ad => {
+      ad.user_name = nameMap.get(ad.user_id) || 'Anunciante';
+    });
+  }
+  return adsList;
+}
+
 export default function MarketplacePage() {
   const navigate = useNavigate();
-  const [ads, setAds] = useState<Ad[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AdCategory | 'all'>('all');
 
-  useEffect(() => {
-    fetchPublishedAds();
-  }, []);
-
-  const fetchPublishedAds = async () => {
-    const { data } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false });
-
-    const adsList = (data || []) as Ad[];
-
-    // Fetch advertiser names (store_name preferred, fallback to name)
-    const userIds = Array.from(new Set(adsList.map(a => a.user_id)));
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, name, store_name')
-        .in('user_id', userIds);
-      const nameMap = new Map(
-        (profiles || []).map(p => [p.user_id, (p as any).store_name || p.name])
-      );
-      adsList.forEach(ad => {
-        ad.user_name = nameMap.get(ad.user_id) || 'Anunciante';
-      });
-    }
-
-    setAds(adsList);
-    setLoading(false);
-  };
-
-  const filtered = ads.filter(ad => {
-    const matchesSearch = !search || 
-      ad.title.toLowerCase().includes(search.toLowerCase()) ||
-      ad.description.toLowerCase().includes(search.toLowerCase()) ||
-      (ad.region && ad.region.toLowerCase().includes(search.toLowerCase()));
-    const matchesCategory = category === 'all' || ad.category === category;
-    return matchesSearch && matchesCategory;
+  const { data: ads = [], isLoading } = useQuery({
+    queryKey: ['marketplace-ads'],
+    queryFn: fetchPublishedAds,
+    staleTime: 1000 * 60 * 2,
   });
+
+  // Debounce search input (250ms)
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 250);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return ads.filter(ad => {
+      const matchesCategory = category === 'all' || ad.category === category;
+      if (!matchesCategory) return false;
+      if (!q) return true;
+      return (
+        ad.title.toLowerCase().includes(q) ||
+        ad.description.toLowerCase().includes(q) ||
+        (ad.region && ad.region.toLowerCase().includes(q))
+      );
+    });
+  }, [ads, search, category]);
+
+  const goToAd = useCallback((slug: string) => navigate(`/ad/${slug}`), [navigate]);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-20">
         <div className="container max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="anunciaAI" className="w-8 h-8" />
+            <img src={logo} alt="anunciaAI" className="w-8 h-8" width={32} height={32} />
             <h1 className="text-lg font-bold">
               <span className="text-cta">anunci</span>AI
             </h1>
@@ -80,7 +90,6 @@ export default function MarketplacePage() {
         </div>
       </header>
 
-      {/* Hero */}
       <div className="bg-gradient-to-b from-cta/10 to-background py-8 px-4">
         <div className="container max-w-5xl mx-auto text-center space-y-4">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -93,15 +102,14 @@ export default function MarketplacePage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar anúncios..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className="pl-10"
             />
           </div>
         </div>
       </div>
 
-      {/* Category filters */}
       <div className="container max-w-5xl mx-auto px-4 py-4">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {categoryFilters.map(cat => (
@@ -120,9 +128,8 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Ads Grid */}
       <div className="container max-w-5xl mx-auto px-4 pb-12">
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-cta border-t-transparent rounded-full animate-spin" />
           </div>
@@ -134,16 +141,19 @@ export default function MarketplacePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {filtered.map(ad => (
+            {filtered.map((ad, idx) => (
               <button
                 key={ad.id}
-                onClick={() => navigate(`/ad/${ad.slug}`)}
+                onClick={() => goToAd(ad.slug)}
                 className="bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all text-left group"
               >
-                <div className="aspect-square overflow-hidden">
+                <div className="aspect-square overflow-hidden bg-muted">
                   <img
                     src={ad.main_photo}
                     alt={ad.title}
+                    loading={idx < 4 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    fetchPriority={idx < 4 ? 'high' : 'low'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>

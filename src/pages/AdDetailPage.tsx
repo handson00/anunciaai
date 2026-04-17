@@ -143,7 +143,7 @@ export default function AdDetailPage() {
       <div className="container max-w-lg mx-auto">
         {/* Photos */}
         <div className="relative bg-foreground/5">
-          <img src={allPhotos[currentPhoto]} alt={ad.title} className="w-full aspect-[4/3] object-cover" />
+          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" className="w-full aspect-[4/3] object-cover" />
           {allPhotos.length > 1 && (
             <>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
@@ -168,7 +168,7 @@ export default function AdDetailPage() {
                   i === currentPhoto ? 'border-primary' : 'border-transparent opacity-60'
                 }`}
               >
-                <img src={photo} alt="" className="w-full h-full object-cover" />
+                <img src={photo} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
