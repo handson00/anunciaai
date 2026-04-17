@@ -199,7 +199,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateAd = async (id: string, updates: Partial<Ad>) => {
-    await supabase.from('ads').update(updates).eq('id', id);
+    const { user_name, ...dbUpdates } = updates;
+    await supabase.from('ads').update(dbUpdates).eq('id', id);
   };
 
   const deleteAd = async (id: string) => {
