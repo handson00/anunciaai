@@ -16,6 +16,7 @@ export interface Profile {
   blocked: boolean;
   created_at: string;
   avatar_url?: string | null;
+  store_name?: string | null;
 }
 
 export interface Ad {

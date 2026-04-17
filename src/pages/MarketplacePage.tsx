@@ -35,14 +35,16 @@ export default function MarketplacePage() {
 
     const adsList = (data || []) as Ad[];
 
-    // Fetch advertiser names
+    // Fetch advertiser names (store_name preferred, fallback to name)
     const userIds = Array.from(new Set(adsList.map(a => a.user_id)));
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, name')
+        .select('user_id, name, store_name')
         .in('user_id', userIds);
-      const nameMap = new Map((profiles || []).map(p => [p.user_id, p.name]));
+      const nameMap = new Map(
+        (profiles || []).map(p => [p.user_id, (p as any).store_name || p.name])
+      );
       adsList.forEach(ad => {
         ad.user_name = nameMap.get(ad.user_id) || 'Anunciante';
       });
