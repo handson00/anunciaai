@@ -55,14 +55,27 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     async function fetchGroup() {
-      const { data } = await supabase
+      // Prioritize the group marked as the join link, otherwise fallback to the first active group
+      const { data: joinLinkGroup } = await supabase
         .from('community_groups')
         .select('link')
         .eq('active', true)
-        .order('created_at', { ascending: true });
-      
-      if (data && data.length > 0) {
-        setGroupLink(data[0].link);
+        .eq('is_join_group_link', true)
+        .maybeSingle();
+
+      if (joinLinkGroup) {
+        setGroupLink(joinLinkGroup.link);
+      } else {
+        const { data } = await supabase
+          .from('community_groups')
+          .select('link')
+          .eq('active', true)
+          .order('created_at', { ascending: true })
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          setGroupLink(data[0].link);
+        }
       }
     }
     fetchGroup();
