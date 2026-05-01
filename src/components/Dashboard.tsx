@@ -33,17 +33,27 @@ export function Dashboard() {
 
   useEffect(() => {
     async function fetchGroup() {
-      const { data } = await supabase
+      // Prioritize the group marked as the join link, otherwise fallback to the first active group
+      const { data: joinLinkGroup } = await supabase
         .from('community_groups')
         .select('link')
         .eq('active', true)
-        .order('created_at', { ascending: true })
-        .limit(10);
-      
-      if (data && data.length > 0) {
-        // Find first group with space (mock logic: pick the first active for now)
-        // In a real scenario, we'd check current_members < max_members
-        setCommunityGroupLink(data[0].link);
+        .eq('is_join_group_link', true)
+        .maybeSingle();
+
+      if (joinLinkGroup) {
+        setCommunityGroupLink(joinLinkGroup.link);
+      } else {
+        const { data } = await supabase
+          .from('community_groups')
+          .select('link')
+          .eq('active', true)
+          .order('created_at', { ascending: true })
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          setCommunityGroupLink(data[0].link);
+        }
       }
     }
     fetchGroup();

@@ -16,6 +16,7 @@ interface CommunityGroup {
   name: string;
   whatsapp_group_id: string;
   active: boolean;
+  is_join_group_link: boolean;
   category: string | null;
 }
 
@@ -221,6 +222,14 @@ export default function AdminPage() {
   const handleToggleGroup = async (id: string, active: boolean) => {
     await supabase.from('community_groups').update({ active: !active }).eq('id', id);
     loadGroups();
+  };
+
+  const handleToggleJoinLink = async (id: string, isJoinLink: boolean) => {
+    // If it's already the join link, we can't unmark it easily without marking another one, 
+    // but the user wants to mark *the* group.
+    await supabase.from('community_groups').update({ is_join_group_link: !isJoinLink }).eq('id', id);
+    loadGroups();
+    toast.success('Grupo principal para entrada atualizado');
   };
 
   const handleDeleteGroup = async (id: string) => {
@@ -564,7 +573,10 @@ export default function AdminPage() {
               ) : groups.map(group => (
                 <div key={group.id} className="bg-card border rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
+                      {group.is_join_group_link && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title="Principal" />}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground text-sm">{group.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{group.whatsapp_group_id}</p>
@@ -584,6 +596,11 @@ export default function AdminPage() {
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSendingMessage(sendingMessage === group.id ? null : group.id)}>
                         <MessageSquare className="w-4 h-4 text-cta" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                        onClick={() => handleToggleJoinLink(group.id, group.is_join_group_link)}
+                        title={group.is_join_group_link ? "Desmarcar como principal" : "Marcar como principal"}>
+                        <Users className={`w-4 h-4 ${group.is_join_group_link ? 'text-primary' : 'text-muted-foreground'}`} />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteGroup(group.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
