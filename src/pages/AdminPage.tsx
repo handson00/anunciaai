@@ -36,6 +36,7 @@ export default function AdminPage() {
   const [editingGroup, setEditingGroup] = useState<CommunityGroup | null>(null);
   const [editName, setEditName] = useState('');
   const [editWhatsappId, setEditWhatsappId] = useState('');
+  const [editLink, setEditLink] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [whatsappGroups, setWhatsappGroups] = useState<any[]>([]);
   const [loadingWaGroups, setLoadingWaGroups] = useState(false);
