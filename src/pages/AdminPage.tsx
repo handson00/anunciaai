@@ -544,6 +544,8 @@ export default function AdminPage() {
                   placeholder="Nome do grupo" className="h-11 rounded-xl" />
                 <Input value={editWhatsappId} onChange={e => setEditWhatsappId(e.target.value)}
                   placeholder="ID do grupo no WhatsApp" className="h-11 rounded-xl" />
+                <Input value={editLink} onChange={e => setEditLink(e.target.value)}
+                  placeholder="Link de convite (WhatsApp)" className="h-11 rounded-xl" />
                 <Input value={editCategory} onChange={e => setEditCategory(e.target.value)}
                   placeholder="Categoria (opcional)" className="h-11 rounded-xl" />
                 <Button variant="cta" size="sm" className="w-full" onClick={handleSaveEdit}>
