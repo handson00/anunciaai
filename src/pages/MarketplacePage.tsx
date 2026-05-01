@@ -85,7 +85,7 @@ export default function MarketplacePage() {
             </h1>
           </div>
           <Button 
-            className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse hover:animate-none transition-all"
+            className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
             size="sm" 
             onClick={() => navigate('/login')}
           >
