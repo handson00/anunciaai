@@ -15,6 +15,7 @@ interface CommunityGroup {
   id: string;
   name: string;
   whatsapp_group_id: string;
+  link: string | null;
   active: boolean;
   is_join_group_link: boolean;
   category: string | null;
