@@ -123,7 +123,7 @@ export default function MarketplacePage() {
           <div className="flex items-center gap-2">
             <img src={logo} alt="anunciaAI" className="w-8 h-8" width={32} height={32} />
             <h1 className="text-lg font-bold">
-              <span className="text-cta">anunci</span>AI
+              <span className="text-cta">Anuncia</span>AI
             </h1>
           </div>
           <Button 

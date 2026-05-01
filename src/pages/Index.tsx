@@ -20,7 +20,7 @@ export default function Index() {
         <div className="text-center space-y-3">
           <img src={logo} alt="anunciaAI" className="w-16 h-16 mx-auto" />
           <h1 className="text-2xl font-bold">
-            <span className="text-cta">anunci</span>AI
+            <span className="text-cta">Anuncia</span>AI
           </h1>
           <div className="w-8 h-8 border-2 border-cta border-t-transparent rounded-full animate-spin mx-auto" />
         </div>

@@ -151,7 +151,7 @@ export function WelcomeModal() {
             <div className="text-center space-y-2">
               <img src={logo} alt="anunciaAI" className="mx-auto w-20 h-20 mb-4" />
               <h1 className="text-2xl font-bold text-foreground leading-tight">
-                Bem-vindo ao <span className="text-cta">anunci</span>AI
+                Bem-vindo ao <span className="text-cta">Anuncia</span>AI
               </h1>
               <p className="text-muted-foreground text-sm">
                 Digite seu número de celular para começar
