@@ -597,6 +597,11 @@ export default function AdminPage() {
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSendingMessage(sendingMessage === group.id ? null : group.id)}>
                         <MessageSquare className="w-4 h-4 text-cta" />
                       </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                        onClick={() => handleToggleJoinLink(group.id, group.is_join_group_link)}
+                        title={group.is_join_group_link ? "Desmarcar como principal" : "Marcar como principal"}>
+                        <Users className={`w-4 h-4 ${group.is_join_group_link ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteGroup(group.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
