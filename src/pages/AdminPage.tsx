@@ -573,7 +573,10 @@ export default function AdminPage() {
               ) : groups.map(group => (
                 <div key={group.id} className="bg-card border rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${group.active ? 'bg-cta' : 'bg-muted-foreground/30'}`} />
+                      {group.is_join_group_link && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title="Principal" />}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground text-sm">{group.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{group.whatsapp_group_id}</p>
