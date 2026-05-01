@@ -15,6 +15,7 @@ interface CommunityGroup {
   id: string;
   name: string;
   whatsapp_group_id: string;
+  link: string | null;
   active: boolean;
   is_join_group_link: boolean;
   category: string | null;
@@ -30,10 +31,12 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupId, setNewGroupId] = useState('');
+  const [newGroupLink, setNewGroupLink] = useState('');
   const [newGroupCategory, setNewGroupCategory] = useState('');
   const [editingGroup, setEditingGroup] = useState<CommunityGroup | null>(null);
   const [editName, setEditName] = useState('');
   const [editWhatsappId, setEditWhatsappId] = useState('');
+  const [editLink, setEditLink] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [whatsappGroups, setWhatsappGroups] = useState<any[]>([]);
   const [loadingWaGroups, setLoadingWaGroups] = useState(false);
@@ -210,10 +213,12 @@ export default function AdminPage() {
     await supabase.from('community_groups').insert({
       name: newGroupName.trim(),
       whatsapp_group_id: newGroupId.trim(),
+      link: newGroupLink.trim() || null,
       category: newGroupCategory.trim() || null,
     });
     setNewGroupName('');
     setNewGroupId('');
+    setNewGroupLink('');
     setNewGroupCategory('');
     loadGroups();
     toast.success('Grupo adicionado');
@@ -244,6 +249,7 @@ export default function AdminPage() {
     setEditingGroup(group);
     setEditName(group.name);
     setEditWhatsappId(group.whatsapp_group_id);
+    setEditLink(group.link || '');
     setEditCategory(group.category || '');
   };
 
@@ -255,6 +261,7 @@ export default function AdminPage() {
     await supabase.from('community_groups').update({
       name: editName.trim(),
       whatsapp_group_id: editWhatsappId.trim(),
+      link: editLink.trim() || null,
       category: editCategory.trim() || null,
     }).eq('id', editingGroup.id);
     setEditingGroup(null);
@@ -537,6 +544,8 @@ export default function AdminPage() {
                   placeholder="Nome do grupo" className="h-11 rounded-xl" />
                 <Input value={editWhatsappId} onChange={e => setEditWhatsappId(e.target.value)}
                   placeholder="ID do grupo no WhatsApp" className="h-11 rounded-xl" />
+                <Input value={editLink} onChange={e => setEditLink(e.target.value)}
+                  placeholder="Link de convite (WhatsApp)" className="h-11 rounded-xl" />
                 <Input value={editCategory} onChange={e => setEditCategory(e.target.value)}
                   placeholder="Categoria (opcional)" className="h-11 rounded-xl" />
                 <Button variant="cta" size="sm" className="w-full" onClick={handleSaveEdit}>
@@ -556,6 +565,8 @@ export default function AdminPage() {
                     placeholder="Nome do grupo" className="h-11 rounded-xl" />
                   <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
                     placeholder="ID do grupo (ex: 120363...@g.us)" className="h-11 rounded-xl" />
+                  <Input value={newGroupLink} onChange={e => setNewGroupLink(e.target.value)}
+                    placeholder="Link de convite (WhatsApp)" className="h-11 rounded-xl" />
                   <Input value={newGroupCategory} onChange={e => setNewGroupCategory(e.target.value)}
                     placeholder="Categoria (opcional)" className="h-11 rounded-xl" />
                   <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
