@@ -86,7 +86,7 @@ export function Dashboard() {
           <div className="flex items-center gap-2">
             <img src={logo} alt="anunciaAI" className="w-14 h-14" />
             <h1 className="text-lg font-bold">
-              <span className="text-cta">anunci</span>AI
+              <span className="text-cta">Anuncia</span>AI
             </h1>
           </div>
           <div className="flex items-center gap-2">
