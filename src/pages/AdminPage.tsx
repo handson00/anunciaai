@@ -249,6 +249,7 @@ export default function AdminPage() {
     setEditingGroup(group);
     setEditName(group.name);
     setEditWhatsappId(group.whatsapp_group_id);
+    setEditLink(group.link || '');
     setEditCategory(group.category || '');
   };
 
