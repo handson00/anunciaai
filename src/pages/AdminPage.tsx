@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [loadingWaGroups, setLoadingWaGroups] = useState(false);
   const [settingsUrl, setSettingsUrl] = useState('');
   const [settingsToken, setSettingsToken] = useState('');
+  const [communityJoinLink, setCommunityJoinLink] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'connected' | 'error'>('idle');
@@ -62,7 +63,7 @@ export default function AdminPage() {
   }, [currentUser]);
 
   const loadSettings = async () => {
-    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status']);
+    const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status', 'community_join_link']);
     let hasUrl = false, hasToken = false;
     if (data) {
       for (const s of data) {
@@ -70,6 +71,7 @@ export default function AdminPage() {
         if (s.key === 'uazapi_instance_token') { setSettingsToken(s.value); hasToken = true; }
         if (s.key === 'webhook_url') setWebhookUrl(s.value);
         if (s.key === 'post_to_status') setPostToStatus(s.value === 'true');
+        if (s.key === 'community_join_link') setCommunityJoinLink(s.value);
       }
     }
     if (hasUrl && hasToken) {
@@ -105,6 +107,7 @@ export default function AdminPage() {
         { key: 'uazapi_instance_token', value: settingsToken.trim() },
         { key: 'webhook_url', value: webhookUrl.trim() },
         { key: 'post_to_status', value: postToStatus ? 'true' : 'false' },
+        { key: 'community_join_link', value: communityJoinLink.trim() },
       ]) {
         if (!value) continue;
         const { data: existing } = await supabase.from('app_settings').select('id').eq('key', key).single();
@@ -495,6 +498,26 @@ export default function AdminPage() {
 
         {tab === 'groups' && (
           <div className="space-y-4">
+            {/* Global Link */}
+            <div className="bg-card border-2 border-primary/20 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" /> Link Manual do Botão
+                </h3>
+                <Button variant="cta" size="sm" className="h-8" onClick={handleSaveSettings} disabled={savingSettings}>
+                  {savingSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Salvar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Este link será usado no botão "Entrar no grupo" do site, ignorando a seleção automática de grupos abaixo.</p>
+              <Input
+                value={communityJoinLink}
+                onChange={e => setCommunityJoinLink(e.target.value)}
+                placeholder="https://chat.whatsapp.com/..."
+                className="h-11 rounded-xl"
+              />
+            </div>
+
             {/* Fetch from WhatsApp */}
             <div className="bg-card border rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
