@@ -42,7 +42,7 @@ export function Dashboard() {
         .maybeSingle();
 
       if (joinLinkGroup) {
-        setCommunityGroupLink(joinLinkGroupGroup.link);
+        setCommunityGroupLink(joinLinkGroup.link);
       } else {
         const { data } = await supabase
           .from('community_groups')
