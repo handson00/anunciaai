@@ -99,6 +99,7 @@ export type Database = {
           created_at: string
           current_members: number | null
           id: string
+          is_join_group_link: boolean | null
           link: string | null
           max_members: number | null
           name: string
@@ -110,6 +111,7 @@ export type Database = {
           created_at?: string
           current_members?: number | null
           id?: string
+          is_join_group_link?: boolean | null
           link?: string | null
           max_members?: number | null
           name: string
@@ -121,6 +123,7 @@ export type Database = {
           created_at?: string
           current_members?: number | null
           id?: string
+          is_join_group_link?: boolean | null
           link?: string | null
           max_members?: number | null
           name?: string
