@@ -565,6 +565,8 @@ export default function AdminPage() {
                     placeholder="Nome do grupo" className="h-11 rounded-xl" />
                   <Input value={newGroupId} onChange={e => setNewGroupId(e.target.value)}
                     placeholder="ID do grupo (ex: 120363...@g.us)" className="h-11 rounded-xl" />
+                  <Input value={newGroupLink} onChange={e => setNewGroupLink(e.target.value)}
+                    placeholder="Link de convite (WhatsApp)" className="h-11 rounded-xl" />
                   <Input value={newGroupCategory} onChange={e => setNewGroupCategory(e.target.value)}
                     placeholder="Categoria (opcional)" className="h-11 rounded-xl" />
                   <Button variant="cta" size="sm" className="w-full" onClick={handleAddGroup}>
