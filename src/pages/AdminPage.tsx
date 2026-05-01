@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupId, setNewGroupId] = useState('');
+  const [newGroupLink, setNewGroupLink] = useState('');
   const [newGroupCategory, setNewGroupCategory] = useState('');
   const [editingGroup, setEditingGroup] = useState<CommunityGroup | null>(null);
   const [editName, setEditName] = useState('');
