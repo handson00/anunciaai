@@ -4,7 +4,7 @@ import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -44,6 +44,9 @@ export default function AdminPage() {
   const [connectionInfo, setConnectionInfo] = useState<string>('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [postToStatus, setPostToStatus] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState<string | null>(null);
+  const [groupMessage, setGroupMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     if (currentUser?.is_admin) {
@@ -248,6 +251,30 @@ export default function AdminPage() {
     setEditingGroup(null);
     loadGroups();
     toast.success('Grupo atualizado');
+  };
+
+  const handleSendMessage = async (groupId: string) => {
+    if (!groupMessage.trim()) {
+      toast.error('Digite uma mensagem');
+      return;
+    }
+    setIsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enviar-mensagem-grupo', {
+        body: { group_id: groupId, message: groupMessage.trim() },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || error?.message || 'Erro ao enviar mensagem');
+        return;
+      }
+      toast.success('Mensagem enviada com sucesso');
+      setGroupMessage('');
+      setSendingMessage(null);
+    } catch {
+      toast.error('Erro ao enviar mensagem');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -555,11 +582,36 @@ export default function AdminPage() {
                         onClick={() => handleToggleGroup(group.id, group.active)}>
                         {group.active ? <Ban className="w-4 h-4 text-muted-foreground" /> : <CheckCircle className="w-4 h-4 text-cta" />}
                       </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSendingMessage(sendingMessage === group.id ? null : group.id)}>
+                        <MessageSquare className="w-4 h-4 text-cta" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteGroup(group.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
+                  
+                  {sendingMessage === group.id && (
+                    <div className="mt-2 space-y-2 pl-6 animate-fade-in">
+                      <div className="flex gap-2">
+                        <Input 
+                          value={groupMessage} 
+                          onChange={e => setGroupMessage(e.target.value)}
+                          placeholder="Digite sua mensagem para o grupo..."
+                          className="h-9 text-xs rounded-lg"
+                        />
+                        <Button 
+                          size="sm" 
+                          className="h-9 px-3" 
+                          onClick={() => handleSendMessage(group.id)}
+                          disabled={isSending}
+                        >
+                          {isSending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 pl-6">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${group.active ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}>
                       {group.active ? 'Ativo' : 'Inativo'}
