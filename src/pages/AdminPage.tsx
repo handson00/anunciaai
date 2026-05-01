@@ -224,6 +224,14 @@ export default function AdminPage() {
     loadGroups();
   };
 
+  const handleToggleJoinLink = async (id: string, isJoinLink: boolean) => {
+    // If it's already the join link, we can't unmark it easily without marking another one, 
+    // but the user wants to mark *the* group.
+    await supabase.from('community_groups').update({ is_join_group_link: !isJoinLink }).eq('id', id);
+    loadGroups();
+    toast.success('Grupo principal para entrada atualizado');
+  };
+
   const handleDeleteGroup = async (id: string) => {
     if (confirm('Remover este grupo?')) {
       await supabase.from('community_groups').delete().eq('id', id);
