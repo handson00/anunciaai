@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, LogIn } from 'lucide-react';
+import { Search, Megaphone } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
@@ -84,8 +84,12 @@ export default function MarketplacePage() {
               <span className="text-cta">anunci</span>AI
             </h1>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
-            <LogIn className="w-4 h-4 mr-1" /> Entrar
+          <Button 
+            className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse hover:animate-none transition-all"
+            size="sm" 
+            onClick={() => navigate('/login')}
+          >
+            <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
           </Button>
         </div>
       </header>
