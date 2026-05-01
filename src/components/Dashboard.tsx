@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { Plus, List, UserCog, LogOut, Shield } from 'lucide-react';
+import { Plus, List, UserCog, LogOut, Shield, Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
@@ -16,6 +17,7 @@ export function Dashboard() {
   const { currentUser, loading, logout, getUserAds } = useApp();
   const navigate = useNavigate();
   const [myAds, setMyAds] = useState<Ad[]>([]);
+  const [communityGroupLink, setCommunityGroupLink] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !currentUser) {
@@ -28,6 +30,24 @@ export function Dashboard() {
       getUserAds().then(setMyAds);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    async function fetchGroup() {
+      const { data } = await supabase
+        .from('community_groups')
+        .select('link')
+        .eq('active', true)
+        .order('created_at', { ascending: true })
+        .limit(10);
+      
+      if (data && data.length > 0) {
+        // Find first group with space (mock logic: pick the first active for now)
+        // In a real scenario, we'd check current_members < max_members
+        setCommunityGroupLink(data[0].link);
+      }
+    }
+    fetchGroup();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -109,6 +129,24 @@ export function Dashboard() {
             <p className="text-xs text-muted-foreground mt-0.5">Dados pessoais</p>
           </button>
         </div>
+
+        {communityGroupLink && (
+          <div className="animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+            <Button
+              variant="outline"
+              className="w-full h-14 rounded-2xl border-cta/20 bg-cta/5 hover:bg-cta/10 text-cta flex items-center gap-3"
+              onClick={() => window.open(communityGroupLink, '_blank')}
+            >
+              <div className="w-8 h-8 rounded-lg bg-cta flex items-center justify-center">
+                <Users className="w-4 h-4 text-cta-foreground" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-sm leading-tight">Entrar no grupo</p>
+                <p className="text-[10px] text-cta/70 leading-tight">Comunidade AnunciaAI</p>
+              </div>
+            </Button>
+          </div>
+        )}
 
         {myAds.length > 0 && (
           <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Megaphone } from 'lucide-react';
+import { Search, Megaphone, Users } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
@@ -45,12 +45,28 @@ export default function MarketplacePage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AdCategory | 'all'>('all');
+  const [groupLink, setGroupLink] = useState<string | null>(null);
 
   const { data: ads = [], isLoading } = useQuery({
     queryKey: ['marketplace-ads'],
     queryFn: fetchPublishedAds,
     staleTime: 1000 * 60 * 2,
   });
+
+  useEffect(() => {
+    async function fetchGroup() {
+      const { data } = await supabase
+        .from('community_groups')
+        .select('link')
+        .eq('active', true)
+        .order('created_at', { ascending: true });
+      
+      if (data && data.length > 0) {
+        setGroupLink(data[0].link);
+      }
+    }
+    fetchGroup();
+  }, []);
 
   // Debounce search input (250ms)
   useEffect(() => {
@@ -92,6 +108,16 @@ export default function MarketplacePage() {
             <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
           </Button>
         </div>
+        {groupLink && (
+          <div className="container max-w-5xl mx-auto px-4 mt-2 mb-[-1rem]">
+            <button
+              onClick={() => window.open(groupLink, '_blank')}
+              className="w-full bg-cta/10 text-cta py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-bold border border-cta/20 animate-fade-in"
+            >
+              <Users className="w-4 h-4" /> Entrar no grupo da comunidade
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="bg-gradient-to-b from-cta/10 to-background py-8 px-4">
