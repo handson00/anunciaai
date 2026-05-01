@@ -55,7 +55,19 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     async function fetchGroup() {
-      // Prioritize the group marked as the join link, otherwise fallback to the first active group
+      // 1. Try global manual link first
+      const { data: manualLink } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'community_join_link')
+        .maybeSingle();
+      
+      if (manualLink?.value) {
+        setGroupLink(manualLink.value);
+        return;
+      }
+
+      // 2. Fallback to group marked as the join link
       const { data: joinLinkGroup } = await supabase
         .from('community_groups')
         .select('link')
@@ -63,9 +75,10 @@ export default function MarketplacePage() {
         .eq('is_join_group_link', true)
         .maybeSingle();
 
-      if (joinLinkGroup) {
+      if (joinLinkGroup?.link) {
         setGroupLink(joinLinkGroup.link);
       } else {
+        // 3. Last fallback: first active group
         const { data } = await supabase
           .from('community_groups')
           .select('link')
