@@ -213,10 +213,12 @@ export default function AdminPage() {
     await supabase.from('community_groups').insert({
       name: newGroupName.trim(),
       whatsapp_group_id: newGroupId.trim(),
+      link: newGroupLink.trim() || null,
       category: newGroupCategory.trim() || null,
     });
     setNewGroupName('');
     setNewGroupId('');
+    setNewGroupLink('');
     setNewGroupCategory('');
     loadGroups();
     toast.success('Grupo adicionado');
