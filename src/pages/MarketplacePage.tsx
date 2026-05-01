@@ -135,7 +135,7 @@ export default function MarketplacePage() {
           </Button>
         </div>
         {groupLink && (
-          <div className="container max-w-5xl mx-auto px-4 mt-2 mb-[-1rem]">
+          <div className="container max-w-5xl mx-auto px-4 pb-3">
             <button
               onClick={() => window.open(groupLink, '_blank')}
               className="w-full bg-cta/10 text-cta py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-bold border border-cta/20 animate-fade-in"
