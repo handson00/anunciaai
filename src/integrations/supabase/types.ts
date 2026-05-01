@@ -97,7 +97,10 @@ export type Database = {
           active: boolean
           category: string | null
           created_at: string
+          current_members: number | null
           id: string
+          link: string | null
+          max_members: number | null
           name: string
           whatsapp_group_id: string
         }
@@ -105,7 +108,10 @@ export type Database = {
           active?: boolean
           category?: string | null
           created_at?: string
+          current_members?: number | null
           id?: string
+          link?: string | null
+          max_members?: number | null
           name: string
           whatsapp_group_id: string
         }
@@ -113,7 +119,10 @@ export type Database = {
           active?: boolean
           category?: string | null
           created_at?: string
+          current_members?: number | null
           id?: string
+          link?: string | null
+          max_members?: number | null
           name?: string
           whatsapp_group_id?: string
         }
