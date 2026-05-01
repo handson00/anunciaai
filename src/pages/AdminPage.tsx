@@ -261,6 +261,7 @@ export default function AdminPage() {
     await supabase.from('community_groups').update({
       name: editName.trim(),
       whatsapp_group_id: editWhatsappId.trim(),
+      link: editLink.trim() || null,
       category: editCategory.trim() || null,
     }).eq('id', editingGroup.id);
     setEditingGroup(null);
