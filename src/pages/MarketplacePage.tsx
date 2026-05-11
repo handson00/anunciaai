@@ -19,8 +19,8 @@ const categoryFilters: { value: AdCategory | 'all'; label: string; emoji: string
 async function fetchPublishedAds(): Promise<Ad[]> {
   const { data } = await supabase
     .from('ads')
-    .select('id,user_id,category,title,description,price,condition,brand,region,main_photo,photos,contact_phone,status,created_at,slug')
-    .eq('status', 'published')
+    .select('id,user_id,category,title,description,price,condition,brand,region,main_photo,photos,contact_phone,status,created_at,slug,is_sold')
+    .in('status', ['published', 'sold'])
     .order('created_at', { ascending: false });
 
   const adsList = (data || []) as Ad[];
@@ -204,15 +204,22 @@ export default function MarketplacePage() {
                 onClick={() => goToAd(ad.slug)}
                 className="bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all text-left group"
               >
-                <div className="aspect-square overflow-hidden bg-muted">
+                <div className="aspect-square overflow-hidden bg-muted relative">
                   <img
                     src={ad.main_photo}
                     alt={ad.title}
                     loading={idx < 4 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchPriority={idx < 4 ? 'high' : 'low'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`}
                   />
+                  {ad.status === 'sold' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <span className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider transform -rotate-12 border border-white shadow-sm">
+                        Vendido
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 space-y-1">
                   <p className="font-semibold text-foreground text-sm line-clamp-2 leading-tight">
