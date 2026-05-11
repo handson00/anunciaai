@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 
@@ -13,11 +13,12 @@ const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
   ready: { label: 'Pronto', class: 'bg-secondary text-secondary-foreground' },
   published: { label: 'Publicado', class: 'bg-accent text-accent-foreground' },
+  sold: { label: 'Vendido', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   error: { label: 'Erro', class: 'bg-destructive/10 text-destructive' },
 };
 
 export default function MyAdsPage() {
-  const { getUserAds, deleteAd } = useApp();
+  const { getUserAds, deleteAd, updateAd } = useApp();
   const navigate = useNavigate();
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,23 @@ export default function MyAdsPage() {
       setAds(prev => prev.filter(a => a.id !== id));
       toast.success('Anúncio excluído');
     }
+  };
+
+  const handleMarkAsSold = async (id: string, isSold: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus = isSold ? 'published' : 'sold';
+    const message = isSold ? 'Anúncio reativado' : 'Anúncio marcado como vendido';
+    
+    await updateAd(id, { 
+      status: newStatus as any,
+      is_sold: !isSold 
+    });
+    
+    setAds(prev => prev.map(ad => 
+      ad.id === id ? { ...ad, status: newStatus as any, is_sold: !isSold } : ad
+    ));
+    
+    toast.success(message);
   };
 
   return (
@@ -98,23 +116,32 @@ export default function MyAdsPage() {
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/edit-ad/${ad.slug}`);
-                    }}
-                    className="p-2 text-muted-foreground hover:text-primary transition-colors"
-                    aria-label="Editar anúncio"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => handleDelete(ad.id, e)}
-                    className="p-2 text-muted-foreground hover:text-destructive transition-colors"
-                    aria-label="Excluir anúncio"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center">
+                    <button
+                      onClick={(e) => handleMarkAsSold(ad.id, ad.status === 'sold', e)}
+                      className={`p-2 transition-colors ${ad.status === 'sold' ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'}`}
+                      title={ad.status === 'sold' ? "Marcar como disponível" : "Marcar como vendido"}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/edit-ad/${ad.slug}`);
+                      }}
+                      className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                      aria-label="Editar anúncio"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(ad.id, e)}
+                      className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label="Excluir anúncio"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
