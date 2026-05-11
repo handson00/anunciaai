@@ -23,6 +23,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          is_sold: boolean | null
           main_photo: string
           photos: string[] | null
           price: number
@@ -41,6 +42,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          is_sold?: boolean | null
           main_photo: string
           photos?: string[] | null
           price: number
@@ -59,6 +61,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          is_sold?: boolean | null
           main_photo?: string
           photos?: string[] | null
           price?: number
@@ -249,7 +252,7 @@ export type Database = {
     Enums: {
       ad_category: "automobile" | "product" | "property" | "service"
       ad_condition: "new" | "used"
-      ad_status: "draft" | "ready" | "published" | "error"
+      ad_status: "draft" | "ready" | "published" | "error" | "sold"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -379,7 +382,7 @@ export const Constants = {
     Enums: {
       ad_category: ["automobile", "product", "property", "service"],
       ad_condition: ["new", "used"],
-      ad_status: ["draft", "ready", "published", "error"],
+      ad_status: ["draft", "ready", "published", "error", "sold"],
     },
   },
 } as const

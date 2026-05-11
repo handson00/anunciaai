@@ -5,7 +5,7 @@ import type { Tables } from '@/integrations/supabase/types';
 
 export type AdCategory = 'automobile' | 'product' | 'property' | 'service';
 export type AdCondition = 'new' | 'used';
-export type AdStatus = 'draft' | 'ready' | 'published' | 'error';
+export type AdStatus = 'draft' | 'ready' | 'published' | 'sold' | 'error';
 
 export interface Profile {
   id: string;
@@ -35,6 +35,7 @@ export interface Ad {
   status: AdStatus;
   created_at: string;
   slug: string;
+  is_sold?: boolean;
   // joined
   user_name?: string;
 }
