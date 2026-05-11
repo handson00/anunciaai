@@ -17,6 +17,7 @@ const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
   ready: { label: 'Pronto', class: 'bg-secondary text-secondary-foreground' },
   published: { label: 'Publicado', class: 'bg-accent text-accent-foreground' },
+  sold: { label: 'Vendido', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   error: { label: 'Erro', class: 'bg-destructive/10 text-destructive' },
 };
 
@@ -143,7 +144,14 @@ export default function AdDetailPage() {
       <div className="container max-w-lg mx-auto">
         {/* Photos */}
         <div className="relative bg-foreground/5">
-          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" className="w-full aspect-[4/3] object-cover" />
+          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" className={`w-full aspect-[4/3] object-cover ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`} />
+          {ad.status === 'sold' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <span className="bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xl uppercase tracking-wider transform -rotate-12 border-4 border-white shadow-lg">
+                Vendido
+              </span>
+            </div>
+          )}
           {allPhotos.length > 1 && (
             <>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
@@ -224,30 +232,40 @@ export default function AdDetailPage() {
       {/* Fixed Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-10">
         <div className="container max-w-lg mx-auto flex gap-3">
-          {canPublish && (
-            <Button
-              variant="cta"
-              size="lg"
-              className={`flex-1 ${ad.status !== 'published' ? 'animate-[pulse-cta_2s_ease-in-out_infinite]' : ''}`}
-              onClick={handlePublish}
-              disabled={publishing}
-            >
-              {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> {ad.status === 'published' ? 'Republicar' : 'Publicar nos grupos'}</>}
-            </Button>
-          )}
-          {(!isOwner || ad.status === 'published') && (
+          {ad.status === 'sold' ? (
+            <div className="flex-1 text-center py-2">
+              <p className="text-green-600 font-bold text-lg flex items-center justify-center gap-2">
+                Este item já foi vendido
+              </p>
+            </div>
+          ) : (
             <>
-              <Button variant="outline" size="lg" className="flex-1" onClick={handleShare}>
-                <Share2 className="w-5 h-5" /> Compartilhar
-              </Button>
-              {!isOwner && (
-                <Button variant="cta" size="lg" className="flex-1"
-                  onClick={() => {
-                    const msg = encodeURIComponent(`Olá! Vi seu anúncio "${ad.title}" na plataforma anunciaAI e gostaria de saber se ainda está disponível. 😊`);
-                    window.open(`https://wa.me/55${ad.contact_phone}?text=${msg}`, '_blank');
-                  }}>
-                  <Phone className="w-5 h-5" /> Contato
+              {canPublish && (
+                <Button
+                  variant="cta"
+                  size="lg"
+                  className={`flex-1 ${ad.status !== 'published' ? 'animate-[pulse-cta_2s_ease-in-out_infinite]' : ''}`}
+                  onClick={handlePublish}
+                  disabled={publishing}
+                >
+                  {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> {ad.status === 'published' ? 'Republicar' : 'Publicar nos grupos'}</>}
                 </Button>
+              )}
+              {(!isOwner || ad.status === 'published') && (
+                <>
+                  <Button variant="outline" size="lg" className="flex-1" onClick={handleShare}>
+                    <Share2 className="w-5 h-5" /> Compartilhar
+                  </Button>
+                  {!isOwner && (
+                    <Button variant="cta" size="lg" className="flex-1"
+                      onClick={() => {
+                        const msg = encodeURIComponent(`Olá! Vi seu anúncio "${ad.title}" na plataforma anunciaAI e gostaria de saber se ainda está disponível. 😊`);
+                        window.open(`https://wa.me/55${ad.contact_phone}?text=${msg}`, '_blank');
+                      }}>
+                      <Phone className="w-5 h-5" /> Contato
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}
