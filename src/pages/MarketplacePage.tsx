@@ -119,31 +119,32 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-20">
-        <div className="container max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="anunciaAI" className="w-8 h-8" width={32} height={32} />
-            <h1 className="text-lg font-bold">
-              <span className="text-cta">Anuncia</span>AI
-            </h1>
+        <div className="container max-w-5xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="AnunciaAI" className="w-8 h-8 shrink-0" width={32} height={32} />
+              <h1 className="text-lg font-bold whitespace-nowrap">
+                <span className="text-cta">Anuncia</span>AI
+              </h1>
+            </div>
+            <Button 
+              className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
+              size="sm" 
+              onClick={() => navigate('/login')}
+            >
+              <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
+            </Button>
           </div>
-          <Button 
-            className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
-            size="sm" 
-            onClick={() => navigate('/login')}
-          >
-            <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
-          </Button>
-        </div>
-        {groupLink && (
-          <div className="container max-w-5xl mx-auto px-4 pb-3">
+          
+          {groupLink && (
             <button
               onClick={() => window.open(groupLink, '_blank')}
-              className="w-full bg-cta/10 text-cta py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-bold border border-cta/20 animate-fade-in"
+              className="w-full bg-cta/10 text-cta py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-bold border border-cta/20 animate-fade-in hover:bg-cta/20 transition-colors"
             >
               <Users className="w-4 h-4" /> Entrar no grupo da comunidade
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       <div className="bg-gradient-to-b from-cta/10 to-background py-8 px-4">
