@@ -79,8 +79,8 @@ export default function MarketplacePage() {
     isFetchingNextPage, 
     isLoading 
   } = useInfiniteQuery({
-    queryKey: ['marketplace-ads', category],
-    queryFn: ({ pageParam }) => fetchPublishedAds({ pageParam, category }),
+    queryKey: ['marketplace-ads', category, search],
+    queryFn: ({ pageParam }) => fetchPublishedAds({ pageParam, category, searchTerm: search }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
