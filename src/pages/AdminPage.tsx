@@ -698,6 +698,61 @@ export default function AdminPage() {
           </div>
         )}
 
+        {tab === 'logs' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-foreground text-sm">Histórico de Envios</h3>
+              <Button variant="ghost" size="sm" onClick={loadLogs} disabled={loadingLogs}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${loadingLogs ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
+            {loadingLogs && logs.length === 0 ? (
+              <div className="flex justify-center py-10">
+                <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : logs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10 text-sm">Nenhum log encontrado</p>
+            ) : (
+              <div className="space-y-2">
+                {logs.map(log => (
+                  <div key={log.id} className="bg-card border rounded-xl p-3 text-xs space-y-1">
+                    <div className="flex justify-between items-start">
+                      <span className="font-bold text-foreground">
+                        {log.community_groups?.name || 'Grupo Removido'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full font-medium ${
+                        log.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-destructive/10 text-destructive'
+                      }`}>
+                        {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                      </span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {log.ads?.title ? (
+                        <span className="flex items-center gap-1">
+                          <Megaphone className="w-3 h-3" /> Anúncio: {log.ads.title}
+                        </span>
+                      ) : log.message ? (
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> Mensagem: {log.message}
+                        </span>
+                      ) : (
+                        <span>Envio automático</span>
+                      )}
+                    </div>
+                    {log.status === 'error' && log.api_response?.error && (
+                      <p className="text-destructive font-medium mt-1">Erro: {log.api_response.error}</p>
+                    )}
+                    <div className="pt-1 text-[10px] text-muted-foreground/60 flex justify-end">
+                      {new Date(log.created_at).toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {tab === 'settings' && (
           <div className="space-y-4">
             <div className="bg-card border rounded-xl p-4 space-y-4">
