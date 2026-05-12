@@ -4,7 +4,7 @@ import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -24,7 +24,9 @@ interface CommunityGroup {
 export default function AdminPage() {
   const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs'>('ads');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -61,6 +63,27 @@ export default function AdminPage() {
       loadSettings();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (tab === 'logs') {
+      loadLogs();
+    }
+  }, [tab]);
+
+  const loadLogs = async () => {
+    setLoadingLogs(true);
+    const { data } = await supabase
+      .from('publication_logs')
+      .select(`
+        *,
+        ads (title),
+        community_groups (name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    setLogs(data || []);
+    setLoadingLogs(false);
+  };
 
   const loadSettings = async () => {
     const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status', 'community_join_link']);
@@ -330,6 +353,7 @@ export default function AdminPage() {
             { key: 'ads' as const, icon: Megaphone, label: 'Anúncios' },
             { key: 'users' as const, icon: Users, label: 'Anunciantes' },
             { key: 'groups' as const, icon: Radio, label: 'Grupos' },
+            { key: 'logs' as const, icon: ClipboardList, label: 'Logs' },
             { key: 'settings' as const, icon: Settings, label: 'Config' },
           ].map(t => (
             <button
@@ -346,7 +370,7 @@ export default function AdminPage() {
         </div>
 
         {/* Search */}
-        {tab !== 'groups' && (
+        {(tab === 'ads' || tab === 'users') && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -671,6 +695,61 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {tab === 'logs' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-foreground text-sm">Histórico de Envios</h3>
+              <Button variant="ghost" size="sm" onClick={loadLogs} disabled={loadingLogs}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${loadingLogs ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
+            {loadingLogs && logs.length === 0 ? (
+              <div className="flex justify-center py-10">
+                <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : logs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10 text-sm">Nenhum log encontrado</p>
+            ) : (
+              <div className="space-y-2">
+                {logs.map(log => (
+                  <div key={log.id} className="bg-card border rounded-xl p-3 text-xs space-y-1">
+                    <div className="flex justify-between items-start">
+                      <span className="font-bold text-foreground">
+                        {log.community_groups?.name || 'Grupo Removido'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full font-medium ${
+                        log.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-destructive/10 text-destructive'
+                      }`}>
+                        {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                      </span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {log.ads?.title ? (
+                        <span className="flex items-center gap-1">
+                          <Megaphone className="w-3 h-3" /> Anúncio: {log.ads.title}
+                        </span>
+                      ) : log.message ? (
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> Mensagem: {log.message}
+                        </span>
+                      ) : (
+                        <span>Envio automático</span>
+                      )}
+                    </div>
+                    {log.status === 'error' && log.api_response?.error && (
+                      <p className="text-destructive font-medium mt-1">Erro: {log.api_response.error}</p>
+                    )}
+                    <div className="pt-1 text-[10px] text-muted-foreground/60 flex justify-end">
+                      {new Date(log.created_at).toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -175,30 +175,47 @@ export type Database = {
       }
       publication_logs: {
         Row: {
-          ad_id: string
+          ad_id: string | null
           api_response: Json | null
           created_at: string
           group_id: string
           id: string
+          message: string | null
           status: string
         }
         Insert: {
-          ad_id: string
+          ad_id?: string | null
           api_response?: Json | null
           created_at?: string
           group_id: string
           id?: string
+          message?: string | null
           status?: string
         }
         Update: {
-          ad_id?: string
+          ad_id?: string | null
           api_response?: Json | null
           created_at?: string
           group_id?: string
           id?: string
+          message?: string | null
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_publication_logs_ad"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_publication_logs_group"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "publication_logs_ad_id_fkey"
             columns: ["ad_id"]
