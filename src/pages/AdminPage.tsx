@@ -72,17 +72,28 @@ export default function AdminPage() {
 
   const loadLogs = async () => {
     setLoadingLogs(true);
-    const { data } = await supabase
-      .from('publication_logs')
-      .select(`
-        *,
-        ads (title),
-        community_groups (name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(100);
-    setLogs(data || []);
-    setLoadingLogs(false);
+    try {
+      const { data, error } = await supabase
+        .from('publication_logs')
+        .select(`
+          *,
+          ads (title),
+          community_groups (name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) {
+        console.error('Error loading logs:', error);
+        toast.error('Erro ao carregar logs');
+      } else {
+        setLogs(data || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error loading logs:', err);
+    } finally {
+      setLoadingLogs(false);
+    }
   };
 
   const loadSettings = async () => {
