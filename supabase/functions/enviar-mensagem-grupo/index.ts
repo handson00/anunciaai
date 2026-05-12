@@ -81,11 +81,15 @@ Deno.serve(async (req) => {
     const result = await response.json();
     console.log(`Response for ${group.name}:`, JSON.stringify(result));
 
+    // Sanitize result
+    const sanitizedResult = { ...result };
+    if (sanitizedResult.content?.JPEGThumbnail) sanitizedResult.content.JPEGThumbnail = '[thumbnail]';
+
     // Log the action
     await supabase.from('publication_logs').insert({
       group_id: group.id,
       status: response.ok ? 'success' : 'error',
-      api_response: result,
+      api_response: sanitizedResult,
       message: message,
     });
 

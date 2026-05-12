@@ -186,12 +186,17 @@ Deno.serve(async (req) => {
         const result = await response.json();
         console.log(`Response for ${group.name}:`, JSON.stringify(result).substring(0, 200));
 
+        // Sanitize result to remove large thumbnails or media data before logging
+        const sanitizedResult = { ...result };
+        if (sanitizedResult.content?.JPEGThumbnail) sanitizedResult.content.JPEGThumbnail = '[thumbnail]';
+        if (sanitizedResult.content?.imageMessage?.jpegThumbnail) sanitizedResult.content.imageMessage.jpegThumbnail = '[thumbnail]';
+
         // Log result
         await supabase.from('publication_logs').insert({
           ad_id: anuncio_id,
           group_id: group.id,
           status: response.ok ? 'success' : 'error',
-          api_response: result,
+          api_response: sanitizedResult,
         });
 
         return response.ok;
