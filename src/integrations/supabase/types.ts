@@ -28,6 +28,7 @@ export type Database = {
           photos: string[] | null
           price: number
           region: string | null
+          search_vector: unknown
           slug: string
           status: Database["public"]["Enums"]["ad_status"]
           title: string
@@ -47,6 +48,7 @@ export type Database = {
           photos?: string[] | null
           price: number
           region?: string | null
+          search_vector?: unknown
           slug: string
           status?: Database["public"]["Enums"]["ad_status"]
           title: string
@@ -66,6 +68,7 @@ export type Database = {
           photos?: string[] | null
           price?: number
           region?: string | null
+          search_vector?: unknown
           slug?: string
           status?: Database["public"]["Enums"]["ad_status"]
           title?: string
