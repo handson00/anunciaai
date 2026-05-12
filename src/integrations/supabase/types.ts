@@ -175,27 +175,30 @@ export type Database = {
       }
       publication_logs: {
         Row: {
-          ad_id: string
+          ad_id: string | null
           api_response: Json | null
           created_at: string
           group_id: string
           id: string
+          message: string | null
           status: string
         }
         Insert: {
-          ad_id: string
+          ad_id?: string | null
           api_response?: Json | null
           created_at?: string
           group_id: string
           id?: string
+          message?: string | null
           status?: string
         }
         Update: {
-          ad_id?: string
+          ad_id?: string | null
           api_response?: Json | null
           created_at?: string
           group_id?: string
           id?: string
+          message?: string | null
           status?: string
         }
         Relationships: [
