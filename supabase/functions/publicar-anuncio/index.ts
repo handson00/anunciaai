@@ -20,14 +20,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user
-    const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await anonClient.auth.getUser();
-    if (authError || !user) {
+    // Verify user via JWT claims (works with signing-keys system)
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: authError } = await supabase.auth.getClaims(token);
+    if (authError || !claimsData?.claims?.sub) {
+      console.error('Auth error:', authError);
       return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: corsHeaders });
     }
+    const user = { id: claimsData.claims.sub as string };
 
     const { anuncio_id } = await req.json();
     if (!anuncio_id) {
