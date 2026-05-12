@@ -112,6 +112,7 @@ export function AdForm({ category, onBack, ad }: Props) {
 
     setSubmitting(true);
     try {
+      console.log('Iniciando envio de fotos...', photoFiles.length, 'novas fotos');
       const uploadedUrls = await uploadPhotos();
       const allUrls = [...existingPhotos, ...uploadedUrls];
 
@@ -153,9 +154,11 @@ export function AdForm({ category, onBack, ad }: Props) {
           toast.error('Erro ao criar anúncio');
         }
       }
-    } catch {
+    } catch (error: any) {
+      console.error('Erro completo no envio:', error);
       setSubmitting(false);
-      toast.error('Erro ao enviar fotos');
+      const message = error.message || 'Erro desconhecido';
+      toast.error(`Erro ao enviar fotos: ${message}`);
     }
   };
 
