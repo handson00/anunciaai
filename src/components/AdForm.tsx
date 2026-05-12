@@ -63,7 +63,19 @@ export function AdForm({ category, onBack, ad }: Props) {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const validFiles: File[] = [];
+    
     Array.from(files).forEach(file => {
+      if (file.size > MAX_SIZE) {
+        toast.error(`A imagem "${file.name}" é muito grande (máx 10MB)`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    validFiles.forEach(file => {
       setPhotoFiles(prev => [...prev, file]);
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -71,6 +83,9 @@ export function AdForm({ category, onBack, ad }: Props) {
       };
       reader.readAsDataURL(file);
     });
+    
+    // Clear input so same file can be selected again if removed
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removeNewPhoto = (index: number) => {
