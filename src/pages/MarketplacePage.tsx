@@ -131,15 +131,7 @@ export default function MarketplacePage() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return ads;
-    return ads.filter(ad => 
-      ad.title.toLowerCase().includes(q) ||
-      ad.description.toLowerCase().includes(q) ||
-      (ad.region && ad.region.toLowerCase().includes(q))
-    );
-  }, [ads, search]);
+  const filtered = useMemo(() => ads, [ads]);
 
   const goToAd = useCallback((slug: string) => navigate(`/ad/${slug}`), [navigate]);
 
