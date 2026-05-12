@@ -18,7 +18,7 @@ const categoryFilters: { value: AdCategory | 'all'; label: string; emoji: string
   { value: 'service', label: 'Serviços', emoji: '🔧' },
 ];
 
-async function fetchPublishedAds({ pageParam = 0, category = 'all' }: { pageParam?: number; category?: AdCategory | 'all' }) {
+async function fetchPublishedAds({ pageParam = 0, category = 'all', searchTerm = '' }: { pageParam?: number; category?: AdCategory | 'all'; searchTerm?: string }) {
   let query = supabase
     .from('ads')
     .select('id,user_id,category,title,description,price,condition,brand,region,main_photo,photos,contact_phone,status,created_at,slug,is_sold')
@@ -28,6 +28,14 @@ async function fetchPublishedAds({ pageParam = 0, category = 'all' }: { pagePara
 
   if (category !== 'all') {
     query = query.eq('category', category);
+  }
+
+  if (searchTerm.trim()) {
+    // Use the optimized full-text search vector
+    query = query.textSearch('search_vector', searchTerm.trim().split(/\s+/).join(' & '), {
+      config: 'portuguese',
+      type: 'phrase'
+    });
   }
 
   const { data, error } = await query;
