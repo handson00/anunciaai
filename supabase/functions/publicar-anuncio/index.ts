@@ -144,79 +144,93 @@ Deno.serve(async (req) => {
     }
 
     let allSuccess = true;
-    console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}, photoUrl: ${photoUrl.substring(0, 80)}`);
+    const successes: string[] = [];
+    const failures: { group_id: string; error: string }[] = [];
 
-    // Use Promise.allSettled to handle individual group failures gracefully
-    const sendResults = await Promise.allSettled(groups.map(async (group) => {
-      try {
-        console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
+    console.log(`Sending to ${groups.length} groups in chunks, UazAPI URL: ${uazapiUrl}`);
 
-        let response;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout per group
-
+    // Helper to process in chunks to avoid overwhelming the server
+    const CHUNK_SIZE = 5;
+    for (let i = 0; i < groups.length; i += CHUNK_SIZE) {
+      const chunk = groups.slice(i, i + CHUNK_SIZE);
+      console.log(`Processing chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(groups.length / CHUNK_SIZE)}`);
+      
+      const chunkResults = await Promise.allSettled(chunk.map(async (group) => {
         try {
-          if (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')) {
-            response = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout per group
+
+          let response;
+          try {
+            const isBase64OrBlob = photoUrl.startsWith('data:') || photoUrl.startsWith('blob:');
+            const endpoint = isBase64OrBlob ? 'text' : 'media';
+            const url = `${uazapiUrl}/send/${endpoint}?token=${uazapiToken}`;
+            
+            const body = isBase64OrBlob 
+              ? { number: group.whatsapp_group_id, text: caption }
+              : { number: group.whatsapp_group_id, type: 'image', file: photoUrl, text: caption };
+
+            response = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               signal: controller.signal,
-              body: JSON.stringify({
-                number: group.whatsapp_group_id,
-                text: caption,
-              }),
+              body: JSON.stringify(body),
             });
-          } else {
-            response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              signal: controller.signal,
-              body: JSON.stringify({
-                number: group.whatsapp_group_id,
-                type: 'image',
-                file: photoUrl,
-                text: caption,
-              }),
-            });
+          } finally {
+            clearTimeout(timeoutId);
           }
-        } finally {
-          clearTimeout(timeoutId);
+
+          const result = await response.json();
+          
+          // Sanitize result
+          const sanitizedResult = { ...result };
+          if (sanitizedResult.content?.JPEGThumbnail) sanitizedResult.content.JPEGThumbnail = '[thumbnail]';
+          if (sanitizedResult.content?.imageMessage?.jpegThumbnail) sanitizedResult.content.imageMessage.jpegThumbnail = '[thumbnail]';
+
+          return { group_id: group.id, ok: response.ok, result: sanitizedResult };
+        } catch (err: any) {
+          const isTimeout = err.name === 'AbortError';
+          return { group_id: group.id, ok: false, error: isTimeout ? 'Timeout' : err.message };
         }
+      }));
 
-        const result = await response.json();
-        console.log(`Response for ${group.name}:`, JSON.stringify(result).substring(0, 200));
+      // Collect results and prepare batch insert for logs
+      const logsToInsert = chunkResults.map((res: any) => {
+        if (res.status === 'fulfilled') {
+          const { group_id, ok, result, error } = res.value;
+          if (ok) successes.push(group_id);
+          else failures.push({ group_id, error: error || 'Erro na API' });
+          
+          return {
+            ad_id: anuncio_id,
+            group_id,
+            status: ok ? 'success' : 'error',
+            api_response: ok ? result : { error: error || result },
+          };
+        } else {
+          // This should theoretically not happen with try-catch inside map
+          return {
+            ad_id: anuncio_id,
+            group_id: 'unknown',
+            status: 'error',
+            api_response: { error: 'Unknown fulfillment error' },
+          };
+        }
+      });
 
-        // Sanitize result to remove large thumbnails or media data before logging
-        const sanitizedResult = { ...result };
-        if (sanitizedResult.content?.JPEGThumbnail) sanitizedResult.content.JPEGThumbnail = '[thumbnail]';
-        if (sanitizedResult.content?.imageMessage?.jpegThumbnail) sanitizedResult.content.imageMessage.jpegThumbnail = '[thumbnail]';
-
-        // Log result
-        await supabase.from('publication_logs').insert({
-          ad_id: anuncio_id,
-          group_id: group.id,
-          status: response.ok ? 'success' : 'error',
-          api_response: sanitizedResult,
-        });
-
-        return response.ok;
-      } catch (err: any) {
-        const isTimeout = err.name === 'AbortError';
-        console.error(`Error sending to ${group.name}:`, isTimeout ? 'Timeout' : err.message);
-        
-        await supabase.from('publication_logs').insert({
-          ad_id: anuncio_id,
-          group_id: group.id,
-          status: 'error',
-          api_response: { error: isTimeout ? 'Timeout da API' : err.message },
-        });
-        return false;
+      // Batch insert logs for this chunk
+      if (logsToInsert.length > 0) {
+        await supabase.from('publication_logs').insert(logsToInsert);
       }
-    }));
+      
+      // Small delay between chunks to be nice to the API
+      if (i + CHUNK_SIZE < groups.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
 
-    // Consider success if at least one group received it, or adjust logic as needed
-    const successes = sendResults.filter(r => r.status === 'fulfilled' && r.value === true).length;
-    allSuccess = successes > 0; // If at least one sent, don't return 500/error to UI
+    allSuccess = successes.length > 0; // At least one success counts as published
+
 
 
     // Post to WhatsApp Status (Stories) if enabled
