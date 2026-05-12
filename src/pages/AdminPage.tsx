@@ -64,6 +64,27 @@ export default function AdminPage() {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    if (tab === 'logs') {
+      loadLogs();
+    }
+  }, [tab]);
+
+  const loadLogs = async () => {
+    setLoadingLogs(true);
+    const { data } = await supabase
+      .from('publication_logs')
+      .select(`
+        *,
+        ads (title),
+        community_groups (name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    setLogs(data || []);
+    setLoadingLogs(false);
+  };
+
   const loadSettings = async () => {
     const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status', 'community_join_link']);
     let hasUrl = false, hasToken = false;
