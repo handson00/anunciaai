@@ -81,6 +81,14 @@ Deno.serve(async (req) => {
     const result = await response.json();
     console.log(`Response for ${group.name}:`, JSON.stringify(result));
 
+    // Log the action
+    await supabase.from('publication_logs').insert({
+      group_id: group.id,
+      status: response.ok ? 'success' : 'error',
+      api_response: result,
+      message: message,
+    });
+
     if (!response.ok) {
       return new Response(JSON.stringify({ error: 'Erro ao enviar mensagem via WhatsApp', details: result }), { status: 500, headers: corsHeaders });
     }
