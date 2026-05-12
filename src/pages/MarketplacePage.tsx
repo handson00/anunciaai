@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Megaphone, Users } from 'lucide-react';
+import { Search, Megaphone, Users, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
+
+const ADS_PER_PAGE = 12;
 
 const categoryFilters: { value: AdCategory | 'all'; label: string; emoji: string }[] = [
   { value: 'all', label: 'Todos', emoji: '🏪' },
@@ -16,28 +18,43 @@ const categoryFilters: { value: AdCategory | 'all'; label: string; emoji: string
   { value: 'service', label: 'Serviços', emoji: '🔧' },
 ];
 
-async function fetchPublishedAds(): Promise<Ad[]> {
-  const { data } = await supabase
+async function fetchPublishedAds({ pageParam = 0, category = 'all' }: { pageParam?: number; category?: AdCategory | 'all' }) {
+  let query = supabase
     .from('ads')
     .select('id,user_id,category,title,description,price,condition,brand,region,main_photo,photos,contact_phone,status,created_at,slug,is_sold')
     .in('status', ['published', 'sold'])
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(pageParam, pageParam + ADS_PER_PAGE - 1);
+
+  if (category !== 'all') {
+    query = query.eq('category', category);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
 
   const adsList = (data || []) as Ad[];
   const userIds = Array.from(new Set(adsList.map(a => a.user_id)));
+  
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
       .from('profiles')
       .select('user_id, name, store_name')
       .in('user_id', userIds);
+    
     const nameMap = new Map(
       (profiles || []).map(p => [p.user_id, (p as any).store_name || p.name])
     );
+    
     adsList.forEach(ad => {
       ad.user_name = nameMap.get(ad.user_id) || 'Anunciante';
     });
   }
-  return adsList;
+
+  return {
+    ads: adsList,
+    nextCursor: adsList.length === ADS_PER_PAGE ? pageParam + ADS_PER_PAGE : null
+  };
 }
 
 export default function MarketplacePage() {
@@ -47,15 +64,24 @@ export default function MarketplacePage() {
   const [category, setCategory] = useState<AdCategory | 'all'>('all');
   const [groupLink, setGroupLink] = useState<string | null>(null);
 
-  const { data: ads = [], isLoading } = useQuery({
-    queryKey: ['marketplace-ads'],
-    queryFn: fetchPublishedAds,
-    staleTime: 1000 * 60 * 2,
+  const { 
+    data, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage, 
+    isLoading 
+  } = useInfiniteQuery({
+    queryKey: ['marketplace-ads', category],
+    queryFn: ({ pageParam }) => fetchPublishedAds({ pageParam, category }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
+
+  const ads = useMemo(() => data?.pages.flatMap(page => page.ads) || [], [data]);
 
   useEffect(() => {
     async function fetchGroup() {
-      // 1. Try global manual link first
       const { data: manualLink } = await supabase
         .from('app_settings')
         .select('value')
@@ -67,7 +93,6 @@ export default function MarketplacePage() {
         return;
       }
 
-      // 2. Fallback to group marked as the join link
       const { data: joinLinkGroup } = await supabase
         .from('community_groups')
         .select('link')
@@ -78,7 +103,6 @@ export default function MarketplacePage() {
       if (joinLinkGroup?.link) {
         setGroupLink(joinLinkGroup.link);
       } else {
-        // 3. Last fallback: first active group
         const { data } = await supabase
           .from('community_groups')
           .select('link')
@@ -94,7 +118,6 @@ export default function MarketplacePage() {
     fetchGroup();
   }, []);
 
-  // Debounce search input (250ms)
   useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput), 250);
     return () => clearTimeout(t);
@@ -102,17 +125,13 @@ export default function MarketplacePage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return ads.filter(ad => {
-      const matchesCategory = category === 'all' || ad.category === category;
-      if (!matchesCategory) return false;
-      if (!q) return true;
-      return (
-        ad.title.toLowerCase().includes(q) ||
-        ad.description.toLowerCase().includes(q) ||
-        (ad.region && ad.region.toLowerCase().includes(q))
-      );
-    });
-  }, [ads, search, category]);
+    if (!q) return ads;
+    return ads.filter(ad => 
+      ad.title.toLowerCase().includes(q) ||
+      ad.description.toLowerCase().includes(q) ||
+      (ad.region && ad.region.toLowerCase().includes(q))
+    );
+  }, [ads, search]);
 
   const goToAd = useCallback((slug: string) => navigate(`/ad/${slug}`), [navigate]);
 
@@ -188,7 +207,7 @@ export default function MarketplacePage() {
       <div className="container max-w-5xl mx-auto px-4 pb-12">
         {isLoading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-cta border-t-transparent rounded-full animate-spin" />
+            <Loader2 className="w-8 h-8 text-cta animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
@@ -197,47 +216,68 @@ export default function MarketplacePage() {
             <p className="text-sm text-muted-foreground mt-1">Tente outra busca ou categoria</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {filtered.map((ad, idx) => (
-              <button
-                key={ad.id}
-                onClick={() => goToAd(ad.slug)}
-                className="bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all text-left group"
-              >
-                <div className="aspect-square overflow-hidden bg-muted relative">
-                  <img
-                    src={ad.main_photo}
-                    alt={ad.title}
-                    loading={idx < 4 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    fetchPriority={idx < 4 ? 'high' : 'low'}
-                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`}
-                  />
-                  {ad.status === 'sold' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                      <span className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider transform -rotate-12 border border-white shadow-sm">
-                        Vendido
-                      </span>
-                    </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+              {filtered.map((ad, idx) => (
+                <button
+                  key={ad.id}
+                  onClick={() => goToAd(ad.slug)}
+                  className="bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all text-left group"
+                >
+                  <div className="aspect-square overflow-hidden bg-muted relative">
+                    <img
+                      src={ad.main_photo}
+                      alt={ad.title}
+                      loading={idx < 4 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`}
+                    />
+                    {ad.status === 'sold' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <span className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider transform -rotate-12 border border-white shadow-sm">
+                          Vendido
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <p className="font-semibold text-foreground text-sm line-clamp-2 leading-tight">
+                      {ad.title}
+                    </p>
+                    <p className="text-cta font-bold text-base">
+                      R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    {ad.user_name && (
+                      <p className="text-xs text-muted-foreground truncate">👤 {ad.user_name}</p>
+                    )}
+                    {ad.region && (
+                      <p className="text-xs text-muted-foreground">📍 {ad.region}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            {hasNextPage && (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="min-w-[200px]"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    'Carregar mais anúncios'
                   )}
-                </div>
-                <div className="p-3 space-y-1">
-                  <p className="font-semibold text-foreground text-sm line-clamp-2 leading-tight">
-                    {ad.title}
-                  </p>
-                  <p className="text-cta font-bold text-base">
-                    R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                  {ad.user_name && (
-                    <p className="text-xs text-muted-foreground truncate">👤 {ad.user_name}</p>
-                  )}
-                  {ad.region && (
-                    <p className="text-xs text-muted-foreground">📍 {ad.region}</p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
