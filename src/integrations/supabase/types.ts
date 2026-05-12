@@ -203,6 +203,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_publication_logs_ad"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_publication_logs_group"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "publication_logs_ad_id_fkey"
             columns: ["ad_id"]
             isOneToOne: false
