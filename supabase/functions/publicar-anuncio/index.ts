@@ -146,40 +146,47 @@ Deno.serve(async (req) => {
     let allSuccess = true;
     console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}, photoUrl: ${photoUrl.substring(0, 80)}`);
 
-    // Use Promise.all to send to all groups in parallel for better performance
-    const sendResults = await Promise.all(groups.map(async (group) => {
+    // Use Promise.allSettled to handle individual group failures gracefully
+    const sendResults = await Promise.allSettled(groups.map(async (group) => {
       try {
         console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
 
         let response;
-        if (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')) {
-          // Fallback: send text only if storage upload failed
-          response = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              number: group.whatsapp_group_id,
-              text: caption,
-            }),
-          });
-        } else {
-          // Send as image with public URL
-          response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              number: group.whatsapp_group_id,
-              type: 'image',
-              file: photoUrl,
-              text: caption,
-            }),
-          });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout per group
+
+        try {
+          if (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')) {
+            response = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+              body: JSON.stringify({
+                number: group.whatsapp_group_id,
+                text: caption,
+              }),
+            });
+          } else {
+            response = await fetch(`${uazapiUrl}/send/media?token=${uazapiToken}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+              body: JSON.stringify({
+                number: group.whatsapp_group_id,
+                type: 'image',
+                file: photoUrl,
+                text: caption,
+              }),
+            });
+          }
+        } finally {
+          clearTimeout(timeoutId);
         }
 
         const result = await response.json();
         console.log(`Response for ${group.name}:`, JSON.stringify(result).substring(0, 200));
 
-        // Log
+        // Log result
         await supabase.from('publication_logs').insert({
           ad_id: anuncio_id,
           group_id: group.id,
@@ -189,18 +196,23 @@ Deno.serve(async (req) => {
 
         return response.ok;
       } catch (err: any) {
-        console.error(`Error sending to ${group.name}:`, err.message);
+        const isTimeout = err.name === 'AbortError';
+        console.error(`Error sending to ${group.name}:`, isTimeout ? 'Timeout' : err.message);
+        
         await supabase.from('publication_logs').insert({
           ad_id: anuncio_id,
           group_id: group.id,
           status: 'error',
-          api_response: { error: err.message },
+          api_response: { error: isTimeout ? 'Timeout da API' : err.message },
         });
         return false;
       }
     }));
 
-    allSuccess = sendResults.every(res => res === true);
+    // Consider success if at least one group received it, or adjust logic as needed
+    const successes = sendResults.filter(r => r.status === 'fulfilled' && r.value === true).length;
+    allSuccess = successes > 0; // If at least one sent, don't return 500/error to UI
+
 
     // Post to WhatsApp Status (Stories) if enabled
     const postToStatus = settingsMap['post_to_status'];
