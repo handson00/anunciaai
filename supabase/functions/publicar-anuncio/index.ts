@@ -146,7 +146,8 @@ Deno.serve(async (req) => {
     let allSuccess = true;
     console.log(`Sending to ${groups.length} groups, UazAPI URL: ${uazapiUrl}, photoUrl: ${photoUrl.substring(0, 80)}`);
 
-    for (const group of groups) {
+    // Use Promise.all to send to all groups in parallel for better performance
+    const sendResults = await Promise.all(groups.map(async (group) => {
       try {
         console.log(`Sending to group: ${group.name} (${group.whatsapp_group_id})`);
 
@@ -186,7 +187,7 @@ Deno.serve(async (req) => {
           api_response: result,
         });
 
-        if (!response.ok) allSuccess = false;
+        return response.ok;
       } catch (err: any) {
         console.error(`Error sending to ${group.name}:`, err.message);
         await supabase.from('publication_logs').insert({
@@ -195,9 +196,11 @@ Deno.serve(async (req) => {
           status: 'error',
           api_response: { error: err.message },
         });
-        allSuccess = false;
+        return false;
       }
-    }
+    }));
+
+    allSuccess = sendResults.every(res => res === true);
 
     // Post to WhatsApp Status (Stories) if enabled
     const postToStatus = settingsMap['post_to_status'];
