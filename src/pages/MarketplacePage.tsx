@@ -141,9 +141,10 @@ export default function MarketplacePage() {
         <div className="container max-w-5xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <img src={logo} alt="AnunciaAI" className="w-8 h-8 shrink-0" width={32} height={32} />
+              <img src={logo} alt="AnunciaAI" className="w-8 h-8 shrink-0" width={32} height={32} fetchPriority="high" />
               <h1 className="text-lg font-bold whitespace-nowrap">
                 <span className="text-cta">Anuncia</span>AI
+                <span className="sr-only"> — Marketplace da Comunidade</span>
               </h1>
             </div>
             <Button 
@@ -204,7 +205,7 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      <div className="container max-w-5xl mx-auto px-4 pb-12">
+      <main className="container max-w-5xl mx-auto px-4 pb-12">
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 text-cta animate-spin" />
@@ -230,6 +231,7 @@ export default function MarketplacePage() {
                       alt={ad.title}
                       loading={idx < 4 ? 'eager' : 'lazy'}
                       decoding="async"
+                      fetchPriority={idx === 0 ? 'high' : 'auto'}
                       className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`}
                     />
                     {ad.status === 'sold' && (
@@ -279,7 +281,7 @@ export default function MarketplacePage() {
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
