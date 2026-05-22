@@ -1,0 +1,8 @@
+# AnunciaAI
+
+> Marketplace mobile-first da comunidade do Maranhão para anunciar e encontrar produtos, imóveis, automóveis e serviços, com publicação automática em grupos de WhatsApp.
+
+## Pages
+
+- [Marketplace](/): Lista pública de anúncios da comunidade com busca e filtros por categoria.
+- [Login / Cadastro de anunciante](/login): Entrada para anunciantes via telefone e PIN de 4 dígitos.

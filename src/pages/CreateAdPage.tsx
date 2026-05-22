@@ -17,6 +17,7 @@ export default function CreateAdPage() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Voltar"
             onClick={() => category ? setCategory(null) : navigate('/dashboard')}
           >
             <ArrowLeft className="w-5 h-5" />
