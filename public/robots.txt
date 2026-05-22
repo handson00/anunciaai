@@ -12,3 +12,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /edit-profile
+Disallow: /edit-ad/
+Disallow: /create-ad
+Disallow: /my-ads
+
+Sitemap: https://anunciaai.pro/sitemap.xml
