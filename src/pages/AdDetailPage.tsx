@@ -121,7 +121,7 @@ export default function AdDetailPage() {
     <div className="min-h-screen bg-background pb-24">
       <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-10">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(isOwner ? '/my-ads' : '/')}>
+          <Button variant="ghost" size="icon" aria-label="Voltar" onClick={() => navigate(isOwner ? '/my-ads' : '/')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
@@ -131,17 +131,17 @@ export default function AdDetailPage() {
                 <Pencil className="w-5 h-5" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={handleCopyLink}>
+            <Button variant="ghost" size="icon" aria-label={copied ? 'Link copiado' : 'Copiar link'} onClick={handleCopyLink}>
               {copied ? <Check className="w-5 h-5 text-cta" /> : <Copy className="w-5 h-5" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleShare}>
+            <Button variant="ghost" size="icon" aria-label="Compartilhar anúncio" onClick={handleShare}>
               <Share2 className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container max-w-lg mx-auto">
+      <main className="container max-w-lg mx-auto">
         {/* Photos */}
         <div className="relative bg-foreground/5">
           <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" className={`w-full aspect-[4/3] object-cover ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`} />
@@ -156,7 +156,7 @@ export default function AdDetailPage() {
             <>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
                 {allPhotos.map((_, i) => (
-                  <button key={i} onClick={() => setCurrentPhoto(i)}
+                  <button key={i} aria-label={`Ver foto ${i + 1}`} onClick={() => setCurrentPhoto(i)}
                     className={`w-2 h-2 rounded-full transition-all ${i === currentPhoto ? 'bg-card w-5' : 'bg-card/60'}`}
                   />
                 ))}
@@ -171,7 +171,7 @@ export default function AdDetailPage() {
         {allPhotos.length > 1 && (
           <div className="flex gap-2 px-4 py-3 overflow-x-auto">
             {allPhotos.map((photo, i) => (
-              <button key={i} onClick={() => setCurrentPhoto(i)}
+              <button key={i} aria-label={`Selecionar foto ${i + 1}`} onClick={() => setCurrentPhoto(i)}
                 className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                   i === currentPhoto ? 'border-primary' : 'border-transparent opacity-60'
                 }`}
@@ -215,12 +215,12 @@ export default function AdDetailPage() {
           </div>
 
           <div className="border-t pt-4">
-            <h3 className="font-semibold text-foreground mb-2">Descrição</h3>
+            <h2 className="font-semibold text-foreground mb-2">Descrição</h2>
             <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{ad.description}</p>
           </div>
 
           <div className="border-t pt-4">
-            <h3 className="font-semibold text-foreground mb-1">Anunciante</h3>
+            <h2 className="font-semibold text-foreground mb-1">Anunciante</h2>
             <p className="text-muted-foreground text-sm">{ad.user_name || 'Anunciante'}</p>
             <p className="text-muted-foreground text-xs mt-0.5">
               Publicado em {new Date(ad.created_at).toLocaleDateString('pt-BR')}
