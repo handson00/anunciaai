@@ -90,12 +90,19 @@ export function Dashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <img src={logo} alt="anunciaAI" className="w-14 h-14" />
+            <h1 className="text-lg font-bold">
+              <span className="text-cta">Anuncia</span>AI
+              <span className="sr-only"> — Painel de Controle</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
             {currentUser.is_admin && (
-              <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+              <Button variant="ghost" size="icon" aria-label="Painel administrativo" onClick={() => navigate('/admin')}>
                 <Shield className="w-5 h-5" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <Button variant="ghost" size="icon" aria-label="Sair da conta" onClick={handleLogout}>
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
