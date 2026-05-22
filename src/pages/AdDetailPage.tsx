@@ -227,7 +227,7 @@ export default function AdDetailPage() {
             </p>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Fixed Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-10">
