@@ -87,12 +87,6 @@ export function Dashboard() {
             <img src={logo} alt="anunciaAI" className="w-14 h-14" />
             <h1 className="text-lg font-bold">
               <span className="text-cta">Anuncia</span>AI
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="anunciaAI" className="w-14 h-14" />
-            <h1 className="text-lg font-bold">
-              <span className="text-cta">Anuncia</span>AI
               <span className="sr-only"> — Painel de Controle</span>
             </h1>
           </div>
@@ -109,7 +103,7 @@ export function Dashboard() {
         </div>
       </header>
 
-      <div className="container max-w-lg mx-auto px-4 py-6 space-y-6">
+      <main className="container max-w-lg mx-auto px-4 py-6 space-y-6">
         <div className="animate-fade-in-up flex items-center gap-4">
           {currentUser.avatar_url ? (
             <img src={currentUser.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-border flex-shrink-0" />
