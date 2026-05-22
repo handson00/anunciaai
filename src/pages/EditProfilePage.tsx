@@ -74,7 +74,7 @@ export default function EditProfilePage() {
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-lg mx-auto flex items-center gap-3 px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+          <Button variant="ghost" size="icon" aria-label="Voltar" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-bold text-foreground">Editar cadastro</h1>
@@ -90,7 +90,7 @@ export default function EditProfilePage() {
             disabled={uploading}
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Foto" className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt="Foto de perfil do usuário" className="w-full h-full object-cover" />
             ) : (
               <span className="flex items-center justify-center w-full h-full text-2xl font-bold text-muted-foreground">
                 {initials}
