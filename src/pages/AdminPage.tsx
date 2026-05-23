@@ -135,7 +135,7 @@ export default function AdminPage() {
       if (error || (data as any)?.error) {
         toast.error((data as any)?.error || 'Falha ao reenviar');
       } else {
-        toast.success('Mensagem reenviada com sucesso');
+        toast.success('Mensagem colocada na fila de reenvio');
         loadLogs();
       }
     } catch (e: any) {
@@ -369,7 +369,7 @@ export default function AdminPage() {
         toast.error(data?.error || error?.message || 'Erro ao enviar mensagem');
         return;
       }
-      toast.success('Mensagem enviada com sucesso');
+      toast.success('Mensagem colocada na fila de envio');
       setGroupMessage('');
       setSendingMessage(null);
     } catch {
