@@ -14,7 +14,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: corsHeaders });
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: authError } = await supabase.auth.getClaims(token);
@@ -56,16 +58,10 @@ Deno.serve(async (req) => {
     }
 
     // Settings
-    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'site_url']);
+    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['site_url']);
     const settingsMap: Record<string, string> = {};
     if (settings) for (const s of settings) settingsMap[s.key] = s.value;
-    const uazapiUrl = settingsMap['uazapi_server_url'] || Deno.env.get('UAZAPI_SERVER_URL');
-    const uazapiToken = settingsMap['uazapi_instance_token'] || Deno.env.get('UAZAPI_INSTANCE_TOKEN');
     const siteUrl = settingsMap['site_url'] || 'https://anunciaai.pro';
-
-    if (!uazapiUrl || !uazapiToken) {
-      return new Response(JSON.stringify({ error: 'UazAPI não configurada' }), { status: 500, headers: corsHeaders });
-    }
 
     let caption = log.message || '';
     let photoUrl: string | null = null;
@@ -100,38 +96,42 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Sem conteúdo para reenviar' }), { status: 400, headers: corsHeaders });
     }
 
-    const isMedia = photoUrl && !photoUrl.startsWith('data:') && !photoUrl.startsWith('blob:');
-    const endpoint = isMedia ? 'media' : 'text';
-    const body = isMedia
-      ? { number: group.whatsapp_group_id, type: 'image', file: photoUrl, text: caption }
-      : { number: group.whatsapp_group_id, text: caption };
-
-    console.log(`Reenviando para ${group.name} (${group.whatsapp_group_id})`);
-    const response = await fetch(`${uazapiUrl}/send/${endpoint}?token=${uazapiToken}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    const result = await response.json().catch(() => ({}));
-    const sanitized = { ...result };
-    if (sanitized.content?.JPEGThumbnail) sanitized.content.JPEGThumbnail = '[thumbnail]';
-    if (sanitized.content?.imageMessage?.jpegThumbnail) sanitized.content.imageMessage.jpegThumbnail = '[thumbnail]';
-
-    // Insert new log entry (use service role, bypasses RLS check)
-    await supabase.from('publication_logs').insert({
+    const { data: queuedLog, error: logInsertError } = await supabase.from('publication_logs').insert({
       ad_id: log.ad_id,
       group_id: log.group_id,
-      status: response.ok ? 'success' : 'error',
-      api_response: response.ok ? sanitized : { error: sanitized?.error || 'Falha no reenvio', details: sanitized },
-      message: log.ad_id ? null : caption,
-    });
+      status: 'queued',
+      api_response: { queued: true, resent_from: log_id },
+      message: caption,
+    }).select('id').single();
 
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: 'Falha ao reenviar', details: sanitized }), { status: 500, headers: corsHeaders });
+    if (logInsertError || !queuedLog) {
+      return new Response(JSON.stringify({ error: 'Erro ao criar log de reenvio' }), { status: 500, headers: corsHeaders });
     }
 
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { error: queueError } = await supabase.from('publication_queue').insert({
+      ad_id: log.ad_id,
+      group_id: log.group_id,
+      log_id: queuedLog.id,
+      message: caption,
+      photo_url: photoUrl,
+      status: 'queued',
+      created_by: userId,
+    });
+
+    if (queueError) {
+      return new Response(JSON.stringify({ error: 'Erro ao enfileirar reenvio' }), { status: 500, headers: corsHeaders });
+    }
+
+    EdgeRuntime.waitUntil(fetch(`${supabaseUrl}/functions/v1/processar-fila-publicacao`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source: 'resend' }),
+    }).catch((err) => console.error('Queue processor trigger failed:', err.message)));
+
+    return new Response(JSON.stringify({ success: true, queued: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err: any) {
     console.error('Erro reenvio:', err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
