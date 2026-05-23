@@ -53,9 +53,10 @@ Deno.serve(async (req) => {
     // Fetch user profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name')
+      .select('name, store_name')
       .eq('user_id', user.id)
       .single();
+    const advertiserName = profile?.store_name?.trim() || profile?.name || 'Anunciante';
 
     // Fetch active groups
     const { data: groups } = await supabase
