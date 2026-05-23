@@ -97,6 +97,23 @@ export default function AdminPage() {
     }
   };
 
+  const handleResend = async (logId: string) => {
+    setResendingId(logId);
+    try {
+      const { data, error } = await supabase.functions.invoke('reenviar-publicacao', { body: { log_id: logId } });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || 'Falha ao reenviar');
+      } else {
+        toast.success('Mensagem reenviada com sucesso');
+        loadLogs();
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro inesperado');
+    } finally {
+      setResendingId(null);
+    }
+  };
+
   const loadSettings = async () => {
     const { data } = await supabase.from('app_settings').select('*').in('key', ['uazapi_server_url', 'uazapi_instance_token', 'webhook_url', 'post_to_status', 'community_join_link']);
     let hasUrl = false, hasToken = false;
