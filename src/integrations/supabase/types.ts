@@ -317,6 +317,27 @@ export type Database = {
           },
         ]
       }
+      publication_queue_locks: {
+        Row: {
+          locked_by: string | null
+          locked_until: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          locked_by?: string | null
+          locked_until?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          locked_by?: string | null
+          locked_until?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recovery_codes: {
         Row: {
           code: string
@@ -387,6 +408,14 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      release_publication_worker: {
+        Args: { _worker_id: string }
+        Returns: undefined
+      }
+      try_acquire_publication_worker: {
+        Args: { _ttl_seconds?: number; _worker_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       ad_category: "automobile" | "product" | "property" | "service"
