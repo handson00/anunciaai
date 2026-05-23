@@ -11,6 +11,24 @@ const categoryLabels: Record<AdCategory, string> = {
   automobile: 'Automóvel', product: 'Produto', property: 'Imóvel', service: 'Serviço',
 };
 
+const logStatusLabels: Record<string, string> = {
+  queued: 'Na fila',
+  processing: 'Enviando',
+  retry: 'Tentando novamente',
+  success: 'Sucesso',
+  error: 'Erro',
+  failed: 'Erro',
+};
+
+const logStatusClasses: Record<string, string> = {
+  success: 'bg-accent text-accent-foreground',
+  error: 'bg-destructive/10 text-destructive',
+  failed: 'bg-destructive/10 text-destructive',
+  queued: 'bg-secondary text-secondary-foreground',
+  processing: 'bg-primary/10 text-primary',
+  retry: 'bg-secondary text-secondary-foreground',
+};
+
 interface CommunityGroup {
   id: string;
   name: string;
@@ -74,24 +92,37 @@ export default function AdminPage() {
   const loadLogs = async () => {
     setLoadingLogs(true);
     try {
-      const { data, error } = await supabase
+      const { data: rawLogs, error } = await supabase
         .from('publication_logs')
-        .select(`
-          *,
-          ads!fk_publication_logs_ad (title),
-          community_groups!fk_publication_logs_group (name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(200);
       
       if (error) {
         console.error('Error loading logs:', error);
         toast.error('Erro ao carregar logs');
       } else {
-        setLogs(data || []);
+        const logsData = rawLogs || [];
+        const adIds = [...new Set(logsData.map(log => log.ad_id).filter(Boolean))] as string[];
+        const groupIds = [...new Set(logsData.map(log => log.group_id).filter(Boolean))] as string[];
+
+        const [adsResult, groupsResult] = await Promise.all([
+          adIds.length ? supabase.from('ads').select('id, title').in('id', adIds) : Promise.resolve({ data: [] as any[] }),
+          groupIds.length ? supabase.from('community_groups').select('id, name').in('id', groupIds) : Promise.resolve({ data: [] as any[] }),
+        ]);
+
+        const adTitleById = new Map((adsResult.data || []).map((ad: any) => [ad.id, ad.title]));
+        const groupNameById = new Map((groupsResult.data || []).map((group: any) => [group.id, group.name]));
+
+        setLogs(logsData.map(log => ({
+          ...log,
+          ads: log.ad_id ? { title: adTitleById.get(log.ad_id) || 'Anúncio removido' } : null,
+          community_groups: { name: groupNameById.get(log.group_id) || 'Grupo removido' },
+        })));
       }
     } catch (err) {
       console.error('Unexpected error loading logs:', err);
+      toast.error('Erro inesperado ao carregar logs');
     } finally {
       setLoadingLogs(false);
     }
@@ -104,7 +135,7 @@ export default function AdminPage() {
       if (error || (data as any)?.error) {
         toast.error((data as any)?.error || 'Falha ao reenviar');
       } else {
-        toast.success('Mensagem reenviada com sucesso');
+        toast.success('Mensagem colocada na fila de reenvio');
         loadLogs();
       }
     } catch (e: any) {
@@ -338,7 +369,7 @@ export default function AdminPage() {
         toast.error(data?.error || error?.message || 'Erro ao enviar mensagem');
         return;
       }
-      toast.success('Mensagem enviada com sucesso');
+      toast.success('Mensagem colocada na fila de envio');
       setGroupMessage('');
       setSendingMessage(null);
     } catch {
@@ -750,10 +781,8 @@ export default function AdminPage() {
                       <span className="font-bold text-foreground">
                         {log.community_groups?.name || 'Grupo Removido'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full font-medium ${
-                        log.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-destructive/10 text-destructive'
-                      }`}>
-                        {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                      <span className={`px-2 py-0.5 rounded-full font-medium ${logStatusClasses[log.status] || 'bg-secondary text-secondary-foreground'}`}>
+                        {logStatusLabels[log.status] || log.status}
                       </span>
                     </div>
                     <div className="text-muted-foreground">
@@ -769,11 +798,11 @@ export default function AdminPage() {
                         <span>Envio automático</span>
                       )}
                     </div>
-                    {log.status === 'error' && log.api_response?.error && (
+                    {['error', 'failed', 'retry'].includes(log.status) && log.api_response?.error && (
                       <p className="text-destructive font-medium mt-1">Erro: {log.api_response.error}</p>
                     )}
                     <div className="pt-1 flex items-center justify-between gap-2">
-                      {log.status === 'error' ? (
+                      {['error', 'failed'].includes(log.status) ? (
                         <Button
                           size="sm"
                           variant="outline"
@@ -782,7 +811,7 @@ export default function AdminPage() {
                           onClick={() => handleResend(log.id)}
                         >
                           {resendingId === log.id ? (
-                            <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Reenviando...</>
+                            <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Enfileirando...</>
                           ) : (
                             <><Send className="w-3 h-3 mr-1" /> Reenviar</>
                           )}

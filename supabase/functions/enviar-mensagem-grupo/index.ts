@@ -55,49 +55,41 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Grupo não encontrado' }), { status: 404, headers: corsHeaders });
     }
 
-    // Read settings from app_settings
-    const { data: settings } = await supabase.from('app_settings').select('key, value').in('key', ['uazapi_server_url', 'uazapi_instance_token']);
-    const settingsMap: Record<string, string> = {};
-    if (settings) for (const s of settings) settingsMap[s.key] = s.value;
+    console.log(`Queueing manual message to group: ${group.name} (${group.whatsapp_group_id})`);
 
-    const uazapiUrl = settingsMap['uazapi_server_url'] || Deno.env.get('UAZAPI_SERVER_URL');
-    const uazapiToken = settingsMap['uazapi_instance_token'] || Deno.env.get('UAZAPI_INSTANCE_TOKEN');
-
-    if (!uazapiUrl || !uazapiToken) {
-      return new Response(JSON.stringify({ error: 'UazAPI não configurada' }), { status: 500, headers: corsHeaders });
-    }
-
-    console.log(`Sending manual message to group: ${group.name} (${group.whatsapp_group_id})`);
-
-    const response = await fetch(`${uazapiUrl}/send/text?token=${uazapiToken}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        number: group.whatsapp_group_id,
-        text: message,
-      }),
-    });
-
-    const result = await response.json();
-    console.log(`Response for ${group.name}:`, JSON.stringify(result));
-
-    // Sanitize result
-    const sanitizedResult = { ...result };
-    if (sanitizedResult.content?.JPEGThumbnail) sanitizedResult.content.JPEGThumbnail = '[thumbnail]';
-
-    // Log the action
-    await supabase.from('publication_logs').insert({
+    const { data: queuedLog, error: logError } = await supabase.from('publication_logs').insert({
       group_id: group.id,
-      status: response.ok ? 'success' : 'error',
-      api_response: sanitizedResult,
+      status: 'queued',
+      api_response: { queued: true, manual: true },
       message: message,
-    });
+    }).select('id').single();
 
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: 'Erro ao enviar mensagem via WhatsApp', details: result }), { status: 500, headers: corsHeaders });
+    if (logError || !queuedLog) {
+      return new Response(JSON.stringify({ error: 'Erro ao criar log da fila' }), { status: 500, headers: corsHeaders });
     }
 
-    return new Response(JSON.stringify({ success: true, message: 'Mensagem enviada com sucesso' }), {
+    const { error: queueError } = await supabase.from('publication_queue').insert({
+      group_id: group.id,
+      log_id: queuedLog.id,
+      message,
+      status: 'queued',
+      created_by: userId,
+    });
+
+    if (queueError) {
+      return new Response(JSON.stringify({ error: 'Erro ao enfileirar mensagem' }), { status: 500, headers: corsHeaders });
+    }
+
+    EdgeRuntime.waitUntil(fetch(`${supabaseUrl}/functions/v1/processar-fila-publicacao`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source: 'manual' }),
+    }).catch((err) => console.error('Queue processor trigger failed:', err.message)));
+
+    return new Response(JSON.stringify({ success: true, queued: true, message: 'Mensagem enfileirada para envio' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

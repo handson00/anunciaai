@@ -144,94 +144,50 @@ Deno.serve(async (req) => {
       }
     }
 
-    let allSuccess = true;
-    const successes: string[] = [];
-    const failures: { group_id: string; error: string }[] = [];
+    console.log(`Queueing ${groups.length} group sends for ad ${anuncio_id}`);
 
-    console.log(`Sending to ${groups.length} groups in chunks, UazAPI URL: ${uazapiUrl}`);
+    const { data: insertedLogs, error: logsError } = await supabase
+      .from('publication_logs')
+      .insert(groups.map((group) => ({
+        ad_id: anuncio_id,
+        group_id: group.id,
+        status: 'queued',
+        api_response: { queued: true },
+        message: caption,
+      })))
+      .select('id, group_id');
 
-    // Helper to process in chunks to avoid overwhelming the server
-    const CHUNK_SIZE = 5;
-    for (let i = 0; i < groups.length; i += CHUNK_SIZE) {
-      const chunk = groups.slice(i, i + CHUNK_SIZE);
-      console.log(`Processing chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(groups.length / CHUNK_SIZE)}`);
-      
-      const chunkResults = await Promise.allSettled(chunk.map(async (group) => {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout per group
-
-          let response;
-          try {
-            const isBase64OrBlob = photoUrl.startsWith('data:') || photoUrl.startsWith('blob:');
-            const endpoint = isBase64OrBlob ? 'text' : 'media';
-            const url = `${uazapiUrl}/send/${endpoint}?token=${uazapiToken}`;
-            
-            const body = isBase64OrBlob 
-              ? { number: group.whatsapp_group_id, text: caption }
-              : { number: group.whatsapp_group_id, type: 'image', file: photoUrl, text: caption };
-
-            response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              signal: controller.signal,
-              body: JSON.stringify(body),
-            });
-          } finally {
-            clearTimeout(timeoutId);
-          }
-
-          const result = await response.json();
-          
-          // Sanitize result
-          const sanitizedResult = { ...result };
-          if (sanitizedResult.content?.JPEGThumbnail) sanitizedResult.content.JPEGThumbnail = '[thumbnail]';
-          if (sanitizedResult.content?.imageMessage?.jpegThumbnail) sanitizedResult.content.imageMessage.jpegThumbnail = '[thumbnail]';
-
-          return { group_id: group.id, ok: response.ok, result: sanitizedResult };
-        } catch (err: any) {
-          const isTimeout = err.name === 'AbortError';
-          return { group_id: group.id, ok: false, error: isTimeout ? 'Timeout' : err.message };
-        }
-      }));
-
-      // Collect results and prepare batch insert for logs
-      const logsToInsert = chunkResults.map((res: any) => {
-        if (res.status === 'fulfilled') {
-          const { group_id, ok, result, error } = res.value;
-          if (ok) successes.push(group_id);
-          else failures.push({ group_id, error: error || 'Erro na API' });
-          
-          return {
-            ad_id: anuncio_id,
-            group_id,
-            status: ok ? 'success' : 'error',
-            api_response: ok ? result : { error: error || result },
-          };
-        } else {
-          // This should theoretically not happen with try-catch inside map
-          return {
-            ad_id: anuncio_id,
-            group_id: 'unknown',
-            status: 'error',
-            api_response: { error: 'Unknown fulfillment error' },
-          };
-        }
-      });
-
-      // Batch insert logs for this chunk
-      if (logsToInsert.length > 0) {
-        await supabase.from('publication_logs').insert(logsToInsert);
-      }
-      
-      // Small delay between chunks to be nice to the API
-      if (i + CHUNK_SIZE < groups.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+    if (logsError) {
+      console.error('Error creating queued logs:', logsError.message);
+      return new Response(JSON.stringify({ error: 'Erro ao criar logs da fila' }), { status: 500, headers: corsHeaders });
     }
 
-    allSuccess = successes.length > 0; // At least one success counts as published
+    const logByGroup = new Map((insertedLogs || []).map((log: any) => [log.group_id, log.id]));
+    const { error: queueError } = await supabase.from('publication_queue').insert(groups.map((group) => ({
+      ad_id: anuncio_id,
+      group_id: group.id,
+      log_id: logByGroup.get(group.id),
+      message: caption,
+      photo_url: photoUrl,
+      status: 'queued',
+      created_by: user.id,
+    })));
 
+    if (queueError) {
+      console.error('Error queueing sends:', queueError.message);
+      return new Response(JSON.stringify({ error: 'Erro ao enfileirar envios' }), { status: 500, headers: corsHeaders });
+    }
+
+    await supabase.from('ads').update({ status: 'published' }).eq('id', anuncio_id);
+
+    EdgeRuntime.waitUntil(fetch(`${supabaseUrl}/functions/v1/processar-fila-publicacao`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source: 'publish' }),
+    }).catch((err) => console.error('Queue processor trigger failed:', err.message)));
 
 
     // Post to WhatsApp Status (Stories) if enabled
@@ -282,9 +238,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update ad status
-    const finalStatus = allSuccess ? 'published' : 'error';
-    await supabase.from('ads').update({ status: finalStatus }).eq('id', anuncio_id);
+    const finalStatus = 'published';
 
     // Send webhook if configured
     const webhookUrl = settingsMap['webhook_url'];
@@ -318,7 +272,8 @@ Deno.serve(async (req) => {
               user_id: user.id,
             },
             groups_sent: groups.map(g => ({ id: g.id, name: g.name, whatsapp_id: g.whatsapp_group_id })),
-            all_success: allSuccess,
+            all_success: true,
+            queued: true,
           }),
         });
         console.log('Webhook sent successfully');
@@ -328,8 +283,9 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      success: allSuccess,
-      message: allSuccess ? 'Publicado em todos os grupos' : 'Publicado com erros em alguns grupos',
+      success: true,
+      queued: groups.length,
+      message: `Anúncio enfileirado para ${groups.length} grupo(s)`,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

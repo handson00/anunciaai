@@ -235,6 +235,109 @@ export type Database = {
           },
         ]
       }
+      publication_queue: {
+        Row: {
+          ad_id: string | null
+          api_response: Json | null
+          attempts: number
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          log_id: string | null
+          max_attempts: number
+          message: string | null
+          next_run_at: string
+          photo_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ad_id?: string | null
+          api_response?: Json | null
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          log_id?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_run_at?: string
+          photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ad_id?: string | null
+          api_response?: Json | null
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          log_id?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_run_at?: string
+          photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_queue_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_queue_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_queue_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "publication_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publication_queue_locks: {
+        Row: {
+          locked_by: string | null
+          locked_until: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          locked_by?: string | null
+          locked_until?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          locked_by?: string | null
+          locked_until?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recovery_codes: {
         Row: {
           code: string
@@ -267,6 +370,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_publication_queue: {
+        Args: { _limit?: number; _worker_id: string }
+        Returns: {
+          ad_id: string | null
+          api_response: Json | null
+          attempts: number
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          log_id: string | null
+          max_attempts: number
+          message: string | null
+          next_run_at: string
+          photo_url: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "publication_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_public_advertisers: {
         Args: { _user_ids: string[] }
         Returns: {
@@ -277,6 +408,14 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      release_publication_worker: {
+        Args: { _worker_id: string }
+        Returns: undefined
+      }
+      try_acquire_publication_worker: {
+        Args: { _ttl_seconds?: number; _worker_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       ad_category: "automobile" | "product" | "property" | "service"
