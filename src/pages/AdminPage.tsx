@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs'>('ads');
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -93,6 +94,23 @@ export default function AdminPage() {
       console.error('Unexpected error loading logs:', err);
     } finally {
       setLoadingLogs(false);
+    }
+  };
+
+  const handleResend = async (logId: string) => {
+    setResendingId(logId);
+    try {
+      const { data, error } = await supabase.functions.invoke('reenviar-publicacao', { body: { log_id: logId } });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || 'Falha ao reenviar');
+      } else {
+        toast.success('Mensagem reenviada com sucesso');
+        loadLogs();
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro inesperado');
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -754,8 +772,25 @@ export default function AdminPage() {
                     {log.status === 'error' && log.api_response?.error && (
                       <p className="text-destructive font-medium mt-1">Erro: {log.api_response.error}</p>
                     )}
-                    <div className="pt-1 text-[10px] text-muted-foreground/60 flex justify-end">
-                      {new Date(log.created_at).toLocaleString('pt-BR')}
+                    <div className="pt-1 flex items-center justify-between gap-2">
+                      {log.status === 'error' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] px-2"
+                          disabled={resendingId === log.id}
+                          onClick={() => handleResend(log.id)}
+                        >
+                          {resendingId === log.id ? (
+                            <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Reenviando...</>
+                          ) : (
+                            <><Send className="w-3 h-3 mr-1" /> Reenviar</>
+                          )}
+                        </Button>
+                      ) : <span />}
+                      <span className="text-[10px] text-muted-foreground/60">
+                        {new Date(log.created_at).toLocaleString('pt-BR')}
+                      </span>
                     </div>
                   </div>
                 ))}
