@@ -11,6 +11,24 @@ const categoryLabels: Record<AdCategory, string> = {
   automobile: 'Automóvel', product: 'Produto', property: 'Imóvel', service: 'Serviço',
 };
 
+const logStatusLabels: Record<string, string> = {
+  queued: 'Na fila',
+  processing: 'Enviando',
+  retry: 'Tentando novamente',
+  success: 'Sucesso',
+  error: 'Erro',
+  failed: 'Erro',
+};
+
+const logStatusClasses: Record<string, string> = {
+  success: 'bg-accent text-accent-foreground',
+  error: 'bg-destructive/10 text-destructive',
+  failed: 'bg-destructive/10 text-destructive',
+  queued: 'bg-secondary text-secondary-foreground',
+  processing: 'bg-primary/10 text-primary',
+  retry: 'bg-secondary text-secondary-foreground',
+};
+
 interface CommunityGroup {
   id: string;
   name: string;
@@ -74,24 +92,37 @@ export default function AdminPage() {
   const loadLogs = async () => {
     setLoadingLogs(true);
     try {
-      const { data, error } = await supabase
+      const { data: rawLogs, error } = await supabase
         .from('publication_logs')
-        .select(`
-          *,
-          ads!fk_publication_logs_ad (title),
-          community_groups!fk_publication_logs_group (name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(200);
       
       if (error) {
         console.error('Error loading logs:', error);
         toast.error('Erro ao carregar logs');
       } else {
-        setLogs(data || []);
+        const logsData = rawLogs || [];
+        const adIds = [...new Set(logsData.map(log => log.ad_id).filter(Boolean))] as string[];
+        const groupIds = [...new Set(logsData.map(log => log.group_id).filter(Boolean))] as string[];
+
+        const [adsResult, groupsResult] = await Promise.all([
+          adIds.length ? supabase.from('ads').select('id, title').in('id', adIds) : Promise.resolve({ data: [] as any[] }),
+          groupIds.length ? supabase.from('community_groups').select('id, name').in('id', groupIds) : Promise.resolve({ data: [] as any[] }),
+        ]);
+
+        const adTitleById = new Map((adsResult.data || []).map((ad: any) => [ad.id, ad.title]));
+        const groupNameById = new Map((groupsResult.data || []).map((group: any) => [group.id, group.name]));
+
+        setLogs(logsData.map(log => ({
+          ...log,
+          ads: log.ad_id ? { title: adTitleById.get(log.ad_id) || 'Anúncio removido' } : null,
+          community_groups: { name: groupNameById.get(log.group_id) || 'Grupo removido' },
+        })));
       }
     } catch (err) {
       console.error('Unexpected error loading logs:', err);
+      toast.error('Erro inesperado ao carregar logs');
     } finally {
       setLoadingLogs(false);
     }
