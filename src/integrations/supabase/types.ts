@@ -247,6 +247,7 @@ export type Database = {
           last_error: string | null
           locked_at: string | null
           locked_by: string | null
+          log_id: string | null
           max_attempts: number
           message: string | null
           next_run_at: string
@@ -265,6 +266,7 @@ export type Database = {
           last_error?: string | null
           locked_at?: string | null
           locked_by?: string | null
+          log_id?: string | null
           max_attempts?: number
           message?: string | null
           next_run_at?: string
@@ -283,6 +285,7 @@ export type Database = {
           last_error?: string | null
           locked_at?: string | null
           locked_by?: string | null
+          log_id?: string | null
           max_attempts?: number
           message?: string | null
           next_run_at?: string
@@ -303,6 +306,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_queue_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "publication_logs"
             referencedColumns: ["id"]
           },
         ]
@@ -352,6 +362,7 @@ export type Database = {
           last_error: string | null
           locked_at: string | null
           locked_by: string | null
+          log_id: string | null
           max_attempts: number
           message: string | null
           next_run_at: string
