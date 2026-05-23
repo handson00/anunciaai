@@ -238,9 +238,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update ad status
-    const finalStatus = allSuccess ? 'published' : 'error';
-    await supabase.from('ads').update({ status: finalStatus }).eq('id', anuncio_id);
+    const finalStatus = 'published';
 
     // Send webhook if configured
     const webhookUrl = settingsMap['webhook_url'];
@@ -274,7 +272,8 @@ Deno.serve(async (req) => {
               user_id: user.id,
             },
             groups_sent: groups.map(g => ({ id: g.id, name: g.name, whatsapp_id: g.whatsapp_group_id })),
-            all_success: allSuccess,
+            all_success: true,
+            queued: true,
           }),
         });
         console.log('Webhook sent successfully');
@@ -284,8 +283,9 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      success: allSuccess,
-      message: allSuccess ? 'Publicado em todos os grupos' : 'Publicado com erros em alguns grupos',
+      success: true,
+      queued: groups.length,
+      message: `Anúncio enfileirado para ${groups.length} grupo(s)`,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
