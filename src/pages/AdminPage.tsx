@@ -772,8 +772,25 @@ export default function AdminPage() {
                     {log.status === 'error' && log.api_response?.error && (
                       <p className="text-destructive font-medium mt-1">Erro: {log.api_response.error}</p>
                     )}
-                    <div className="pt-1 text-[10px] text-muted-foreground/60 flex justify-end">
-                      {new Date(log.created_at).toLocaleString('pt-BR')}
+                    <div className="pt-1 flex items-center justify-between gap-2">
+                      {log.status === 'error' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] px-2"
+                          disabled={resendingId === log.id}
+                          onClick={() => handleResend(log.id)}
+                        >
+                          {resendingId === log.id ? (
+                            <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Reenviando...</>
+                          ) : (
+                            <><Send className="w-3 h-3 mr-1" /> Reenviar</>
+                          )}
+                        </Button>
+                      ) : <span />}
+                      <span className="text-[10px] text-muted-foreground/60">
+                        {new Date(log.created_at).toLocaleString('pt-BR')}
+                      </span>
                     </div>
                   </div>
                 ))}
