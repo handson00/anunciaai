@@ -79,7 +79,7 @@ export default function AdminPage() {
         .select(`
           *,
           ads!fk_publication_logs_ad (title),
-          community_groups (name)
+          community_groups!fk_publication_logs_group (name)
         `)
         .order('created_at', { ascending: false })
         .limit(50);
