@@ -53,9 +53,10 @@ Deno.serve(async (req) => {
     // Fetch user profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name')
+      .select('name, store_name')
       .eq('user_id', user.id)
       .single();
+    const advertiserName = profile?.store_name?.trim() || profile?.name || 'Anunciante';
 
     // Fetch active groups
     const { data: groups } = await supabase
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
     const lines = [
       `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
       '',
-      `🏪 ${profile?.name || 'Anunciante'}`,
+      `🏪 ${advertiserName}`,
       `📦 ${ad.title}`,
       `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ];
@@ -313,7 +314,7 @@ Deno.serve(async (req) => {
               link: `${siteUrl}/ad/${ad.slug}`,
             },
             advertiser: {
-              name: profile?.name || 'Anunciante',
+              name: advertiserName,
               user_id: user.id,
             },
             groups_sent: groups.map(g => ({ id: g.id, name: g.name, whatsapp_id: g.whatsapp_group_id })),
