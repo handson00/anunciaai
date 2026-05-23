@@ -339,6 +339,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_publication_queue: {
+        Args: { _limit?: number; _worker_id: string }
+        Returns: {
+          ad_id: string | null
+          api_response: Json | null
+          attempts: number
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          message: string | null
+          next_run_at: string
+          photo_url: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "publication_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_public_advertisers: {
         Args: { _user_ids: string[] }
         Returns: {
