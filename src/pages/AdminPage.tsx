@@ -77,7 +77,7 @@ export default function AdminPage() {
         .from('publication_logs')
         .select(`
           *,
-          ads (title),
+          ads!fk_publication_logs_ad (title),
           community_groups (name)
         `)
         .order('created_at', { ascending: false })
