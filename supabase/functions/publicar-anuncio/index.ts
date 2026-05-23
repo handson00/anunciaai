@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
               link: `${siteUrl}/ad/${ad.slug}`,
             },
             advertiser: {
-              name: profile?.name || 'Anunciante',
+              name: advertiserName,
               user_id: user.id,
             },
             groups_sent: groups.map(g => ({ id: g.id, name: g.name, whatsapp_id: g.whatsapp_group_id })),
