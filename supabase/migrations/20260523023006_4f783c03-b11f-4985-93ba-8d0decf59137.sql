@@ -1,0 +1,1 @@
+UPDATE public.app_settings SET value = 'https://anunciaai.pro', updated_at = now() WHERE key = 'site_url';
