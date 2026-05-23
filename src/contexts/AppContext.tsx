@@ -227,12 +227,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Get user name (may fail if not authenticated due to RLS)
     let userName = 'Anunciante';
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('user_id', data.user_id)
-        .single();
-      if (profile?.name) userName = profile.name;
+      const { data: profiles } = await supabase
+        .rpc('get_public_advertisers', { _user_ids: [data.user_id] });
+      const p = profiles?.[0] as any;
+      if (p) userName = p.store_name || p.name || userName;
     } catch {}
     return { ...data, user_name: userName } as Ad;
   };

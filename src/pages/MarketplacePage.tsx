@@ -46,14 +46,12 @@ async function fetchPublishedAds({ pageParam = 0, category = 'all', searchTerm =
   
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('user_id, name, store_name')
-      .in('user_id', userIds);
-    
+      .rpc('get_public_advertisers', { _user_ids: userIds });
+
     const nameMap = new Map(
-      (profiles || []).map(p => [p.user_id, (p as any).store_name || p.name])
+      (profiles || []).map((p: any) => [p.user_id, p.store_name || p.name])
     );
-    
+
     adsList.forEach(ad => {
       ad.user_name = nameMap.get(ad.user_id) || 'Anunciante';
     });

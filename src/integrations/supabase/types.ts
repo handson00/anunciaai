@@ -267,6 +267,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_advertisers: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          name: string
+          store_name: string
+          user_id: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
