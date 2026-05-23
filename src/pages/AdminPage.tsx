@@ -781,10 +781,8 @@ export default function AdminPage() {
                       <span className="font-bold text-foreground">
                         {log.community_groups?.name || 'Grupo Removido'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full font-medium ${
-                        log.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-destructive/10 text-destructive'
-                      }`}>
-                        {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                      <span className={`px-2 py-0.5 rounded-full font-medium ${logStatusClasses[log.status] || 'bg-secondary text-secondary-foreground'}`}>
+                        {logStatusLabels[log.status] || log.status}
                       </span>
                     </div>
                     <div className="text-muted-foreground">
@@ -800,11 +798,11 @@ export default function AdminPage() {
                         <span>Envio automático</span>
                       )}
                     </div>
-                    {log.status === 'error' && log.api_response?.error && (
+                    {['error', 'failed', 'retry'].includes(log.status) && log.api_response?.error && (
                       <p className="text-destructive font-medium mt-1">Erro: {log.api_response.error}</p>
                     )}
                     <div className="pt-1 flex items-center justify-between gap-2">
-                      {log.status === 'error' ? (
+                      {['error', 'failed'].includes(log.status) ? (
                         <Button
                           size="sm"
                           variant="outline"
@@ -813,7 +811,7 @@ export default function AdminPage() {
                           onClick={() => handleResend(log.id)}
                         >
                           {resendingId === log.id ? (
-                            <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Reenviando...</>
+                            <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Enfileirando...</>
                           ) : (
                             <><Send className="w-3 h-3 mr-1" /> Reenviar</>
                           )}
