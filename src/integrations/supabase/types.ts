@@ -235,6 +235,78 @@ export type Database = {
           },
         ]
       }
+      publication_queue: {
+        Row: {
+          ad_id: string | null
+          api_response: Json | null
+          attempts: number
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          message: string | null
+          next_run_at: string
+          photo_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ad_id?: string | null
+          api_response?: Json | null
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_run_at?: string
+          photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ad_id?: string | null
+          api_response?: Json | null
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_run_at?: string
+          photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_queue_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_queue_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recovery_codes: {
         Row: {
           code: string
