@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const lines = [
       `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
       '',
-      `🏪 ${profile?.name || 'Anunciante'}`,
+      `🏪 ${advertiserName}`,
       `📦 ${ad.title}`,
       `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ];
