@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     const settingsMap: Record<string, string> = {};
     if (settings) for (const s of settings) settingsMap[s.key] = s.value;
 
-    const siteUrl = settingsMap['site_url'] || Deno.env.get('SITE_URL') || 'https://anunciaai.lovable.app';
+    const siteUrl = settingsMap['site_url'] || Deno.env.get('SITE_URL') || 'https://anunciaai.pro';
     const emoji = catEmoji[ad.category] || '📦';
     const lines = [
       `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
