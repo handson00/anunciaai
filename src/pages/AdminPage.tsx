@@ -918,58 +918,32 @@ export default function AdminPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Cadastre até 3 perfis do Instagram Business. A cada 1 hora o sistema verifica novos posts e envia para todos os grupos ativos do WhatsApp.
+                Cadastre até 3 perfis públicos do Instagram. A cada 1 hora o sistema verifica novos posts (via Apify) e envia para todos os grupos ativos do WhatsApp.
               </p>
               <p className="text-[10px] text-muted-foreground bg-secondary/50 p-2 rounded-lg">
-                💡 Agora você pode buscar automaticamente as contas Instagram Business vinculadas ao token configurado.
+                💡 Funciona com qualquer perfil público — basta informar o @username.
               </p>
             </div>
 
             {igMonitors.length < 3 && (
               <div className="bg-card border rounded-xl p-4 space-y-3">
                 <h4 className="font-medium text-foreground text-sm">Adicionar perfil ({igMonitors.length}/3)</h4>
-                <Button variant="outline" className="w-full" onClick={handleLoadIgAccounts} disabled={loadingIgAccounts}>
-                  <RefreshCw className={`w-4 h-4 ${loadingIgAccounts ? 'animate-spin' : ''}`} />
-                  {loadingIgAccounts ? 'Buscando contas...' : 'Buscar contas automaticamente'}
-                </Button>
-                {igAccounts.length > 0 && (
-                  <div className="space-y-2">
-                    {igAccounts.map(account => (
-                      <button
-                        key={account.ig_user_id}
-                        type="button"
-                        onClick={() => handleSelectIgAccount(account)}
-                        className="w-full bg-secondary/60 border rounded-xl p-3 text-left flex items-center gap-3 hover:bg-secondary transition-colors"
-                      >
-                        {account.profile_picture_url ? (
-                          <img src={account.profile_picture_url} alt={`@${account.username}`} className="w-9 h-9 rounded-full object-cover" />
-                        ) : (
-                          <Instagram className="w-9 h-9 text-primary p-2 bg-card rounded-full" />
-                        )}
-                        <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-foreground truncate">@{account.username}</span>
-                          <span className="block text-[10px] text-muted-foreground truncate">Página: {account.page_name}</span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
                 <Input
                   value={igUsername}
                   onChange={e => setIgUsername(e.target.value)}
-                  placeholder="@username"
+                  placeholder="@username (ex: instagram)"
                   className="h-11 rounded-xl"
                 />
-                <Input
-                  value={igUserId}
-                  onChange={e => setIgUserId(e.target.value)}
-                  placeholder="ID Business da conta (ex: 17841400000000000)"
-                  className="h-11 rounded-xl"
-                />
-                <Button variant="cta" className="w-full" onClick={handleAddIgMonitor} disabled={savingIg}>
-                  <Plus className="w-4 h-4" />
-                  {savingIg ? 'Adicionando...' : 'Adicionar perfil'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={handleTestIgUsername} disabled={testingIg}>
+                    <RefreshCw className={`w-4 h-4 ${testingIg ? 'animate-spin' : ''}`} />
+                    {testingIg ? 'Testando...' : 'Testar'}
+                  </Button>
+                  <Button variant="cta" className="flex-1" onClick={handleAddIgMonitor} disabled={savingIg}>
+                    <Plus className="w-4 h-4" />
+                    {savingIg ? 'Adicionando...' : 'Adicionar'}
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -983,6 +957,7 @@ export default function AdminPage() {
                   <Instagram className="w-5 h-5 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm truncate">@{m.username}</p>
+
                     <p className="text-[10px] text-muted-foreground truncate">ID: {m.ig_user_id}</p>
                     <p className="text-[10px] text-muted-foreground">
                       {m.last_checked_at ? `Última verificação: ${new Date(m.last_checked_at).toLocaleString('pt-BR')}` : 'Nunca verificado'}
