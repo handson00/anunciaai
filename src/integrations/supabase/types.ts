@@ -137,6 +137,39 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_monitors: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          ig_user_id: string
+          last_checked_at: string | null
+          last_post_id: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          ig_user_id: string
+          last_checked_at?: string | null
+          last_post_id?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          ig_user_id?: string
+          last_checked_at?: string | null
+          last_post_id?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
