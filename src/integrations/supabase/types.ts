@@ -142,7 +142,7 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
-          ig_user_id: string
+          ig_user_id: string | null
           last_checked_at: string | null
           last_post_id: string | null
           updated_at: string
@@ -152,7 +152,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
-          ig_user_id: string
+          ig_user_id?: string | null
           last_checked_at?: string | null
           last_post_id?: string | null
           updated_at?: string
@@ -162,7 +162,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
-          ig_user_id?: string
+          ig_user_id?: string | null
           last_checked_at?: string | null
           last_post_id?: string | null
           updated_at?: string

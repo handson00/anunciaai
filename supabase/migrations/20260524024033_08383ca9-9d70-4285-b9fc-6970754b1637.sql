@@ -1,0 +1,1 @@
+ALTER TABLE public.instagram_monitors ALTER COLUMN ig_user_id DROP NOT NULL;

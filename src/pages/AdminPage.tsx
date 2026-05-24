@@ -47,11 +47,9 @@ export default function AdminPage() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [igMonitors, setIgMonitors] = useState<any[]>([]);
-  const [igAccounts, setIgAccounts] = useState<any[]>([]);
-  const [igUserId, setIgUserId] = useState('');
   const [igUsername, setIgUsername] = useState('');
   const [savingIg, setSavingIg] = useState(false);
-  const [loadingIgAccounts, setLoadingIgAccounts] = useState(false);
+  const [testingIg, setTestingIg] = useState(false);
   const [runningIg, setRunningIg] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
@@ -105,8 +103,9 @@ export default function AdminPage() {
   };
 
   const handleAddIgMonitor = async () => {
-    if (!igUserId.trim() || !igUsername.trim()) {
-      toast.error('Preencha ID e username');
+    const username = igUsername.trim().replace(/^@/, '');
+    if (!username) {
+      toast.error('Informe o @username');
       return;
     }
     if (igMonitors.length >= 3) {
@@ -114,41 +113,35 @@ export default function AdminPage() {
       return;
     }
     setSavingIg(true);
-    const { error } = await supabase.from('instagram_monitors').insert({
-      ig_user_id: igUserId.trim(),
-      username: igUsername.trim().replace(/^@/, ''),
-    });
+    const { error } = await supabase.from('instagram_monitors').insert({ username });
     setSavingIg(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setIgUserId(''); setIgUsername('');
+    setIgUsername('');
     toast.success('Perfil adicionado');
     loadIgMonitors();
   };
 
-  const handleLoadIgAccounts = async () => {
-    setLoadingIgAccounts(true);
-    const { data, error } = await supabase.functions.invoke('monitorar-instagram', { body: { action: 'list_accounts' } });
-    setLoadingIgAccounts(false);
-
-    if (error || data?.error) {
-      toast.error(data?.error || error?.message || 'Erro ao buscar contas');
+  const handleTestIgUsername = async () => {
+    const username = igUsername.trim().replace(/^@/, '');
+    if (!username) {
+      toast.error('Informe o @username para testar');
       return;
     }
-
-    setIgAccounts(data?.accounts || []);
-    if (!data?.accounts?.length) {
-      toast.error('Nenhuma conta Instagram Business vinculada foi encontrada');
+    setTestingIg(true);
+    const { data, error } = await supabase.functions.invoke('monitorar-instagram', {
+      body: { action: 'test_username', username },
+    });
+    setTestingIg(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || 'Erro ao testar');
+      return;
     }
+    toast.success(`✓ ${data?.count || 0} post(s) encontrados para @${username}`);
   };
 
-  const handleSelectIgAccount = (account: any) => {
-    setIgUsername(account.username || '');
-    setIgUserId(account.ig_user_id || '');
-    toast.success(`@${account.username} selecionado`);
-  };
 
   const handleToggleIgMonitor = async (id: string, active: boolean) => {
     await supabase.from('instagram_monitors').update({ active: !active }).eq('id', id);
@@ -925,58 +918,32 @@ export default function AdminPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Cadastre até 3 perfis do Instagram Business. A cada 1 hora o sistema verifica novos posts e envia para todos os grupos ativos do WhatsApp.
+                Cadastre até 3 perfis públicos do Instagram. A cada 1 hora o sistema verifica novos posts (via Apify) e envia para todos os grupos ativos do WhatsApp.
               </p>
               <p className="text-[10px] text-muted-foreground bg-secondary/50 p-2 rounded-lg">
-                💡 Agora você pode buscar automaticamente as contas Instagram Business vinculadas ao token configurado.
+                💡 Funciona com qualquer perfil público — basta informar o @username.
               </p>
             </div>
 
             {igMonitors.length < 3 && (
               <div className="bg-card border rounded-xl p-4 space-y-3">
                 <h4 className="font-medium text-foreground text-sm">Adicionar perfil ({igMonitors.length}/3)</h4>
-                <Button variant="outline" className="w-full" onClick={handleLoadIgAccounts} disabled={loadingIgAccounts}>
-                  <RefreshCw className={`w-4 h-4 ${loadingIgAccounts ? 'animate-spin' : ''}`} />
-                  {loadingIgAccounts ? 'Buscando contas...' : 'Buscar contas automaticamente'}
-                </Button>
-                {igAccounts.length > 0 && (
-                  <div className="space-y-2">
-                    {igAccounts.map(account => (
-                      <button
-                        key={account.ig_user_id}
-                        type="button"
-                        onClick={() => handleSelectIgAccount(account)}
-                        className="w-full bg-secondary/60 border rounded-xl p-3 text-left flex items-center gap-3 hover:bg-secondary transition-colors"
-                      >
-                        {account.profile_picture_url ? (
-                          <img src={account.profile_picture_url} alt={`@${account.username}`} className="w-9 h-9 rounded-full object-cover" />
-                        ) : (
-                          <Instagram className="w-9 h-9 text-primary p-2 bg-card rounded-full" />
-                        )}
-                        <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-foreground truncate">@{account.username}</span>
-                          <span className="block text-[10px] text-muted-foreground truncate">Página: {account.page_name}</span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
                 <Input
                   value={igUsername}
                   onChange={e => setIgUsername(e.target.value)}
-                  placeholder="@username"
+                  placeholder="@username (ex: instagram)"
                   className="h-11 rounded-xl"
                 />
-                <Input
-                  value={igUserId}
-                  onChange={e => setIgUserId(e.target.value)}
-                  placeholder="ID Business da conta (ex: 17841400000000000)"
-                  className="h-11 rounded-xl"
-                />
-                <Button variant="cta" className="w-full" onClick={handleAddIgMonitor} disabled={savingIg}>
-                  <Plus className="w-4 h-4" />
-                  {savingIg ? 'Adicionando...' : 'Adicionar perfil'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={handleTestIgUsername} disabled={testingIg}>
+                    <RefreshCw className={`w-4 h-4 ${testingIg ? 'animate-spin' : ''}`} />
+                    {testingIg ? 'Testando...' : 'Testar'}
+                  </Button>
+                  <Button variant="cta" className="flex-1" onClick={handleAddIgMonitor} disabled={savingIg}>
+                    <Plus className="w-4 h-4" />
+                    {savingIg ? 'Adicionando...' : 'Adicionar'}
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -990,7 +957,8 @@ export default function AdminPage() {
                   <Instagram className="w-5 h-5 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm truncate">@{m.username}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">ID: {m.ig_user_id}</p>
+
+                    
                     <p className="text-[10px] text-muted-foreground">
                       {m.last_checked_at ? `Última verificação: ${new Date(m.last_checked_at).toLocaleString('pt-BR')}` : 'Nunca verificado'}
                     </p>

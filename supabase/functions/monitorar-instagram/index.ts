@@ -5,17 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const IG_API = 'https://graph.facebook.com/v21.0'
+const APIFY_ACTOR = 'apify~instagram-scraper'
+
+async function fetchApifyPosts(username: string, token: string, limit = 5): Promise<any[]> {
+  const url = `https://api.apify.com/v2/acts/${APIFY_ACTOR}/run-sync-get-dataset-items?token=${token}&timeout=120`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      directUrls: [`https://www.instagram.com/${username}/`],
+      resultsType: 'posts',
+      resultsLimit: limit,
+      addParentData: false,
+    }),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Apify ${res.status}: ${text.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  return Array.isArray(data) ? data : []
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const apifyToken = Deno.env.get('APIFY_API_TOKEN')
   const supabase = createClient(supabaseUrl, serviceKey)
 
   try {
-    // Auth: admin, cron (anon+body.cron) ou internal (service role)
     const authHeader = req.headers.get('Authorization') || ''
     const token = authHeader.replace('Bearer ', '')
     const isInternal = token && token === serviceKey
@@ -35,35 +55,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    const igToken = Deno.env.get('INSTAGRAM_GRAPH_TOKEN')
-    if (!igToken) {
-      return new Response(JSON.stringify({ error: 'INSTAGRAM_GRAPH_TOKEN não configurado' }), { status: 500, headers: corsHeaders })
+    if (!apifyToken) {
+      return new Response(JSON.stringify({ error: 'APIFY_API_TOKEN não configurado' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    if (body?.action === 'list_accounts') {
-      const url = `${IG_API}/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${igToken}`
-      const response = await fetch(url)
-      const data = await response.json()
-
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: data?.error?.message || 'Erro ao buscar contas do Instagram' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Teste rápido de um username (preview de posts sem enfileirar)
+    if (body?.action === 'test_username') {
+      const username = String(body.username || '').replace('@', '').trim()
+      if (!username) {
+        return new Response(JSON.stringify({ error: 'username obrigatório' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-
-      const accounts = (data.data || [])
-        .filter((page: any) => page.instagram_business_account?.id)
-        .map((page: any) => ({
-          page_name: page.name,
-          ig_user_id: page.instagram_business_account.id,
-          username: page.instagram_business_account.username || page.name,
-          profile_picture_url: page.instagram_business_account.profile_picture_url || null,
-        }))
-
-      return new Response(JSON.stringify({ success: true, accounts }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      const posts = await fetchApifyPosts(username, apifyToken, 3)
+      return new Response(JSON.stringify({
+        success: true,
+        username,
+        count: posts.length,
+        preview: posts.slice(0, 3).map((p: any) => ({
+          id: p.id || p.shortCode,
+          caption: (p.caption || '').slice(0, 120),
+          url: p.url || `https://www.instagram.com/p/${p.shortCode}/`,
+          image: p.displayUrl,
+        })),
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     const { data: monitors } = await supabase
@@ -84,34 +101,35 @@ Deno.serve(async (req) => {
 
     for (const monitor of monitors as any[]) {
       try {
-        const url = `${IG_API}/${monitor.ig_user_id}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username&limit=5&access_token=${igToken}`
-        const response = await fetch(url)
-        const data = await response.json()
+        const username = String(monitor.username || '').replace('@', '').trim()
+        if (!username) continue
 
-        if (!response.ok) {
-          results.push({ username: monitor.username, error: data?.error?.message || 'Erro IG API' })
-          continue
-        }
-
-        const posts = (data.data || []) as any[]
+        const posts = await fetchApifyPosts(username, apifyToken, 5)
         if (posts.length === 0) {
           await supabase.from('instagram_monitors').update({ last_checked_at: new Date().toISOString() }).eq('id', monitor.id)
+          results.push({ username, info: 'sem posts' })
           continue
         }
 
-        // Primeira execução: apenas marca o último post sem disparar histórico
+        const normalized = posts.map((p: any) => ({
+          id: p.id || p.shortCode,
+          caption: p.caption || '',
+          image: p.displayUrl || null,
+          permalink: p.url || (p.shortCode ? `https://www.instagram.com/p/${p.shortCode}/` : null),
+        }))
+
+        // Primeira execução: só marca o último
         if (!monitor.last_post_id) {
           await supabase.from('instagram_monitors').update({
-            last_post_id: posts[0].id,
+            last_post_id: normalized[0].id,
             last_checked_at: new Date().toISOString(),
           }).eq('id', monitor.id)
-          results.push({ username: monitor.username, initialized: true, last_post: posts[0].id })
+          results.push({ username, initialized: true, last_post: normalized[0].id })
           continue
         }
 
-        // Pega posts novos (até encontrar o último processado)
         const newPosts: any[] = []
-        for (const p of posts) {
+        for (const p of normalized) {
           if (p.id === monitor.last_post_id) break
           newPosts.push(p)
         }
@@ -121,19 +139,13 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Enfileira do mais antigo pro mais novo
         for (const post of newPosts.reverse()) {
-          const caption = post.caption || ''
-          const mediaUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url
-          const username = post.username || monitor.username
-
-          const message = `📸 *Nova publicação de @${username}*\n\n${caption}\n\n🔗 Ver no Instagram: ${post.permalink}`
-
+          const message = `📸 *Nova publicação de @${username}*\n\n${post.caption}\n\n🔗 Ver no Instagram: ${post.permalink || ''}`
           for (const group of activeGroups) {
             await supabase.from('publication_queue').insert({
               group_id: group.id,
               message,
-              photo_url: mediaUrl || null,
+              photo_url: post.image,
               status: 'queued',
             })
           }
@@ -141,17 +153,16 @@ Deno.serve(async (req) => {
         }
 
         await supabase.from('instagram_monitors').update({
-          last_post_id: posts[0].id,
+          last_post_id: normalized[0].id,
           last_checked_at: new Date().toISOString(),
         }).eq('id', monitor.id)
 
-        results.push({ username: monitor.username, new_posts: newPosts.length, groups: activeGroups.length })
+        results.push({ username, new_posts: newPosts.length, groups: activeGroups.length })
       } catch (err: any) {
         results.push({ username: monitor.username, error: err.message })
       }
     }
 
-    // Dispara processador da fila
     if (totalNewPosts > 0) {
       EdgeRuntime.waitUntil(fetch(`${supabaseUrl}/functions/v1/processar-fila-publicacao`, {
         method: 'POST',
