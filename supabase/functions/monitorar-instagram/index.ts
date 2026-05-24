@@ -15,12 +15,15 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey)
 
   try {
-    // Auth: admin OR internal (cron usa service role)
+    // Auth: admin, cron (anon+body.cron) ou internal (service role)
     const authHeader = req.headers.get('Authorization') || ''
     const token = authHeader.replace('Bearer ', '')
     const isInternal = token && token === serviceKey
+    let body: any = {}
+    try { body = await req.json() } catch { body = {} }
+    const isCron = body?.cron === true
 
-    if (!isInternal) {
+    if (!isInternal && !isCron) {
       const { data: claims } = await supabase.auth.getClaims(token)
       if (!claims?.claims?.sub) {
         return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: corsHeaders })
