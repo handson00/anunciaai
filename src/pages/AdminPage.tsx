@@ -47,11 +47,9 @@ export default function AdminPage() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [igMonitors, setIgMonitors] = useState<any[]>([]);
-  const [igAccounts, setIgAccounts] = useState<any[]>([]);
-  const [igUserId, setIgUserId] = useState('');
   const [igUsername, setIgUsername] = useState('');
   const [savingIg, setSavingIg] = useState(false);
-  const [loadingIgAccounts, setLoadingIgAccounts] = useState(false);
+  const [testingIg, setTestingIg] = useState(false);
   const [runningIg, setRunningIg] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
