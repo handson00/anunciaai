@@ -473,6 +473,7 @@ export default function AdminPage() {
             { key: 'users' as const, icon: Users, label: 'Anunciantes' },
             { key: 'groups' as const, icon: Radio, label: 'Grupos' },
             { key: 'logs' as const, icon: ClipboardList, label: 'Logs' },
+            { key: 'instagram' as const, icon: Instagram, label: 'Instagram' },
             { key: 'settings' as const, icon: Settings, label: 'Config' },
           ].map(t => (
             <button
