@@ -47,9 +47,11 @@ export default function AdminPage() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [igMonitors, setIgMonitors] = useState<any[]>([]);
+  const [igAccounts, setIgAccounts] = useState<any[]>([]);
   const [igUserId, setIgUserId] = useState('');
   const [igUsername, setIgUsername] = useState('');
   const [savingIg, setSavingIg] = useState(false);
+  const [loadingIgAccounts, setLoadingIgAccounts] = useState(false);
   const [runningIg, setRunningIg] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
@@ -124,6 +126,28 @@ export default function AdminPage() {
     setIgUserId(''); setIgUsername('');
     toast.success('Perfil adicionado');
     loadIgMonitors();
+  };
+
+  const handleLoadIgAccounts = async () => {
+    setLoadingIgAccounts(true);
+    const { data, error } = await supabase.functions.invoke('monitorar-instagram', { body: { action: 'list_accounts' } });
+    setLoadingIgAccounts(false);
+
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || 'Erro ao buscar contas');
+      return;
+    }
+
+    setIgAccounts(data?.accounts || []);
+    if (!data?.accounts?.length) {
+      toast.error('Nenhuma conta Instagram Business vinculada foi encontrada');
+    }
+  };
+
+  const handleSelectIgAccount = (account: any) => {
+    setIgUsername(account.username || '');
+    setIgUserId(account.ig_user_id || '');
+    toast.success(`@${account.username} selecionado`);
   };
 
   const handleToggleIgMonitor = async (id: string, active: boolean) => {
