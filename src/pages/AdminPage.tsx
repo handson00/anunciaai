@@ -958,7 +958,7 @@ export default function AdminPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm truncate">@{m.username}</p>
 
-                    <p className="text-[10px] text-muted-foreground truncate">ID: {m.ig_user_id}</p>
+                    
                     <p className="text-[10px] text-muted-foreground">
                       {m.last_checked_at ? `Última verificação: ${new Date(m.last_checked_at).toLocaleString('pt-BR')}` : 'Nunca verificado'}
                     </p>
