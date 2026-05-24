@@ -888,6 +888,78 @@ export default function AdminPage() {
           </div>
         )}
 
+        {tab === 'instagram' && (
+          <div className="space-y-4">
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  <Instagram className="w-4 h-4" /> Monitorar Instagram
+                </h3>
+                <Button variant="outline" size="sm" onClick={handleRunIgNow} disabled={runningIg}>
+                  <RefreshCw className={`w-4 h-4 ${runningIg ? 'animate-spin' : ''}`} />
+                  Verificar agora
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cadastre até 3 perfis do Instagram Business. A cada 1 hora o sistema verifica novos posts e envia para todos os grupos ativos do WhatsApp.
+              </p>
+              <p className="text-[10px] text-muted-foreground bg-secondary/50 p-2 rounded-lg">
+                💡 Para encontrar o <b>ID Business</b> de uma conta, use o Graph API Explorer do Facebook (precisa ser conta Business/Creator vinculada a uma página).
+              </p>
+            </div>
+
+            {igMonitors.length < 3 && (
+              <div className="bg-card border rounded-xl p-4 space-y-3">
+                <h4 className="font-medium text-foreground text-sm">Adicionar perfil ({igMonitors.length}/3)</h4>
+                <Input
+                  value={igUsername}
+                  onChange={e => setIgUsername(e.target.value)}
+                  placeholder="@username"
+                  className="h-11 rounded-xl"
+                />
+                <Input
+                  value={igUserId}
+                  onChange={e => setIgUserId(e.target.value)}
+                  placeholder="ID Business da conta (ex: 17841400000000000)"
+                  className="h-11 rounded-xl"
+                />
+                <Button variant="cta" className="w-full" onClick={handleAddIgMonitor} disabled={savingIg}>
+                  <Plus className="w-4 h-4" />
+                  {savingIg ? 'Adicionando...' : 'Adicionar perfil'}
+                </Button>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {igMonitors.length === 0 ? (
+                <div className="bg-card border rounded-xl p-6 text-center text-sm text-muted-foreground">
+                  Nenhum perfil monitorado ainda.
+                </div>
+              ) : igMonitors.map(m => (
+                <div key={m.id} className="bg-card border rounded-xl p-4 flex items-center gap-3">
+                  <Instagram className="w-5 h-5 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm truncate">@{m.username}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">ID: {m.ig_user_id}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {m.last_checked_at ? `Última verificação: ${new Date(m.last_checked_at).toLocaleString('pt-BR')}` : 'Nunca verificado'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleIgMonitor(m.id, m.active)}
+                    className={`text-[10px] px-2 py-1 rounded-full font-medium ${m.active ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    {m.active ? 'Ativo' : 'Pausado'}
+                  </button>
+                  <button onClick={() => handleDeleteIgMonitor(m.id)} className="text-destructive p-1">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {tab === 'settings' && (
           <div className="space-y-4">
             <div className="bg-card border rounded-xl p-4 space-y-4">
