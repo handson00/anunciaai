@@ -47,9 +47,11 @@ export default function AdminPage() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [igMonitors, setIgMonitors] = useState<any[]>([]);
+  const [igAccounts, setIgAccounts] = useState<any[]>([]);
   const [igUserId, setIgUserId] = useState('');
   const [igUsername, setIgUsername] = useState('');
   const [savingIg, setSavingIg] = useState(false);
+  const [loadingIgAccounts, setLoadingIgAccounts] = useState(false);
   const [runningIg, setRunningIg] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
@@ -124,6 +126,28 @@ export default function AdminPage() {
     setIgUserId(''); setIgUsername('');
     toast.success('Perfil adicionado');
     loadIgMonitors();
+  };
+
+  const handleLoadIgAccounts = async () => {
+    setLoadingIgAccounts(true);
+    const { data, error } = await supabase.functions.invoke('monitorar-instagram', { body: { action: 'list_accounts' } });
+    setLoadingIgAccounts(false);
+
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || 'Erro ao buscar contas');
+      return;
+    }
+
+    setIgAccounts(data?.accounts || []);
+    if (!data?.accounts?.length) {
+      toast.error('Nenhuma conta Instagram Business vinculada foi encontrada');
+    }
+  };
+
+  const handleSelectIgAccount = (account: any) => {
+    setIgUsername(account.username || '');
+    setIgUserId(account.ig_user_id || '');
+    toast.success(`@${account.username} selecionado`);
   };
 
   const handleToggleIgMonitor = async (id: string, active: boolean) => {
@@ -904,13 +928,39 @@ export default function AdminPage() {
                 Cadastre até 3 perfis do Instagram Business. A cada 1 hora o sistema verifica novos posts e envia para todos os grupos ativos do WhatsApp.
               </p>
               <p className="text-[10px] text-muted-foreground bg-secondary/50 p-2 rounded-lg">
-                💡 Para encontrar o <b>ID Business</b> de uma conta, use o Graph API Explorer do Facebook (precisa ser conta Business/Creator vinculada a uma página).
+                💡 Agora você pode buscar automaticamente as contas Instagram Business vinculadas ao token configurado.
               </p>
             </div>
 
             {igMonitors.length < 3 && (
               <div className="bg-card border rounded-xl p-4 space-y-3">
                 <h4 className="font-medium text-foreground text-sm">Adicionar perfil ({igMonitors.length}/3)</h4>
+                <Button variant="outline" className="w-full" onClick={handleLoadIgAccounts} disabled={loadingIgAccounts}>
+                  <RefreshCw className={`w-4 h-4 ${loadingIgAccounts ? 'animate-spin' : ''}`} />
+                  {loadingIgAccounts ? 'Buscando contas...' : 'Buscar contas automaticamente'}
+                </Button>
+                {igAccounts.length > 0 && (
+                  <div className="space-y-2">
+                    {igAccounts.map(account => (
+                      <button
+                        key={account.ig_user_id}
+                        type="button"
+                        onClick={() => handleSelectIgAccount(account)}
+                        className="w-full bg-secondary/60 border rounded-xl p-3 text-left flex items-center gap-3 hover:bg-secondary transition-colors"
+                      >
+                        {account.profile_picture_url ? (
+                          <img src={account.profile_picture_url} alt={`@${account.username}`} className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                          <Instagram className="w-9 h-9 text-primary p-2 bg-card rounded-full" />
+                        )}
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-foreground truncate">@{account.username}</span>
+                          <span className="block text-[10px] text-muted-foreground truncate">Página: {account.page_name}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <Input
                   value={igUsername}
                   onChange={e => setIgUsername(e.target.value)}

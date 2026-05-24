@@ -40,6 +40,32 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'INSTAGRAM_GRAPH_TOKEN não configurado' }), { status: 500, headers: corsHeaders })
     }
 
+    if (body?.action === 'list_accounts') {
+      const url = `${IG_API}/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${igToken}`
+      const response = await fetch(url)
+      const data = await response.json()
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: data?.error?.message || 'Erro ao buscar contas do Instagram' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const accounts = (data.data || [])
+        .filter((page: any) => page.instagram_business_account?.id)
+        .map((page: any) => ({
+          page_name: page.name,
+          ig_user_id: page.instagram_business_account.id,
+          username: page.instagram_business_account.username || page.name,
+          profile_picture_url: page.instagram_business_account.profile_picture_url || null,
+        }))
+
+      return new Response(JSON.stringify({ success: true, accounts }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { data: monitors } = await supabase
       .from('instagram_monitors').select('*').eq('active', true)
 
