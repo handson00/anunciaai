@@ -103,8 +103,9 @@ export default function AdminPage() {
   };
 
   const handleAddIgMonitor = async () => {
-    if (!igUserId.trim() || !igUsername.trim()) {
-      toast.error('Preencha ID e username');
+    const username = igUsername.trim().replace(/^@/, '');
+    if (!username) {
+      toast.error('Informe o @username');
       return;
     }
     if (igMonitors.length >= 3) {
@@ -112,41 +113,35 @@ export default function AdminPage() {
       return;
     }
     setSavingIg(true);
-    const { error } = await supabase.from('instagram_monitors').insert({
-      ig_user_id: igUserId.trim(),
-      username: igUsername.trim().replace(/^@/, ''),
-    });
+    const { error } = await supabase.from('instagram_monitors').insert({ username });
     setSavingIg(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setIgUserId(''); setIgUsername('');
+    setIgUsername('');
     toast.success('Perfil adicionado');
     loadIgMonitors();
   };
 
-  const handleLoadIgAccounts = async () => {
-    setLoadingIgAccounts(true);
-    const { data, error } = await supabase.functions.invoke('monitorar-instagram', { body: { action: 'list_accounts' } });
-    setLoadingIgAccounts(false);
-
-    if (error || data?.error) {
-      toast.error(data?.error || error?.message || 'Erro ao buscar contas');
+  const handleTestIgUsername = async () => {
+    const username = igUsername.trim().replace(/^@/, '');
+    if (!username) {
+      toast.error('Informe o @username para testar');
       return;
     }
-
-    setIgAccounts(data?.accounts || []);
-    if (!data?.accounts?.length) {
-      toast.error('Nenhuma conta Instagram Business vinculada foi encontrada');
+    setTestingIg(true);
+    const { data, error } = await supabase.functions.invoke('monitorar-instagram', {
+      body: { action: 'test_username', username },
+    });
+    setTestingIg(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || 'Erro ao testar');
+      return;
     }
+    toast.success(`✓ ${data?.count || 0} post(s) encontrados para @${username}`);
   };
 
-  const handleSelectIgAccount = (account: any) => {
-    setIgUsername(account.username || '');
-    setIgUserId(account.ig_user_id || '');
-    toast.success(`@${account.username} selecionado`);
-  };
 
   const handleToggleIgMonitor = async (id: string, active: boolean) => {
     await supabase.from('instagram_monitors').update({ active: !active }).eq('id', id);
