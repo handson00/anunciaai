@@ -92,7 +92,61 @@ export default function AdminPage() {
     if (tab === 'logs') {
       loadLogs();
     }
+    if (tab === 'instagram') {
+      loadIgMonitors();
+    }
   }, [tab]);
+
+  const loadIgMonitors = async () => {
+    const { data } = await supabase.from('instagram_monitors').select('*').order('created_at', { ascending: false });
+    setIgMonitors(data || []);
+  };
+
+  const handleAddIgMonitor = async () => {
+    if (!igUserId.trim() || !igUsername.trim()) {
+      toast.error('Preencha ID e username');
+      return;
+    }
+    if (igMonitors.length >= 3) {
+      toast.error('Limite de 3 perfis monitorados');
+      return;
+    }
+    setSavingIg(true);
+    const { error } = await supabase.from('instagram_monitors').insert({
+      ig_user_id: igUserId.trim(),
+      username: igUsername.trim().replace(/^@/, ''),
+    });
+    setSavingIg(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setIgUserId(''); setIgUsername('');
+    toast.success('Perfil adicionado');
+    loadIgMonitors();
+  };
+
+  const handleToggleIgMonitor = async (id: string, active: boolean) => {
+    await supabase.from('instagram_monitors').update({ active: !active }).eq('id', id);
+    loadIgMonitors();
+  };
+
+  const handleDeleteIgMonitor = async (id: string) => {
+    if (!confirm('Remover este perfil?')) return;
+    await supabase.from('instagram_monitors').delete().eq('id', id);
+    toast.success('Removido');
+    loadIgMonitors();
+  };
+
+  const handleRunIgNow = async () => {
+    setRunningIg(true);
+    const { data, error } = await supabase.functions.invoke('monitorar-instagram', { body: {} });
+    setRunningIg(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Verificado: ${data?.total_new_posts || 0} post(s) novo(s)`);
+    loadIgMonitors();
+  };
+
 
   const loadLogs = async () => {
     setLoadingLogs(true);
