@@ -4,7 +4,7 @@ import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -42,10 +42,15 @@ interface CommunityGroup {
 export default function AdminPage() {
   const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram'>('ads');
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [igMonitors, setIgMonitors] = useState<any[]>([]);
+  const [igUserId, setIgUserId] = useState('');
+  const [igUsername, setIgUsername] = useState('');
+  const [savingIg, setSavingIg] = useState(false);
+  const [runningIg, setRunningIg] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -87,7 +92,61 @@ export default function AdminPage() {
     if (tab === 'logs') {
       loadLogs();
     }
+    if (tab === 'instagram') {
+      loadIgMonitors();
+    }
   }, [tab]);
+
+  const loadIgMonitors = async () => {
+    const { data } = await supabase.from('instagram_monitors').select('*').order('created_at', { ascending: false });
+    setIgMonitors(data || []);
+  };
+
+  const handleAddIgMonitor = async () => {
+    if (!igUserId.trim() || !igUsername.trim()) {
+      toast.error('Preencha ID e username');
+      return;
+    }
+    if (igMonitors.length >= 3) {
+      toast.error('Limite de 3 perfis monitorados');
+      return;
+    }
+    setSavingIg(true);
+    const { error } = await supabase.from('instagram_monitors').insert({
+      ig_user_id: igUserId.trim(),
+      username: igUsername.trim().replace(/^@/, ''),
+    });
+    setSavingIg(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setIgUserId(''); setIgUsername('');
+    toast.success('Perfil adicionado');
+    loadIgMonitors();
+  };
+
+  const handleToggleIgMonitor = async (id: string, active: boolean) => {
+    await supabase.from('instagram_monitors').update({ active: !active }).eq('id', id);
+    loadIgMonitors();
+  };
+
+  const handleDeleteIgMonitor = async (id: string) => {
+    if (!confirm('Remover este perfil?')) return;
+    await supabase.from('instagram_monitors').delete().eq('id', id);
+    toast.success('Removido');
+    loadIgMonitors();
+  };
+
+  const handleRunIgNow = async () => {
+    setRunningIg(true);
+    const { data, error } = await supabase.functions.invoke('monitorar-instagram', { body: {} });
+    setRunningIg(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Verificado: ${data?.total_new_posts || 0} post(s) novo(s)`);
+    loadIgMonitors();
+  };
+
 
   const loadLogs = async () => {
     setLoadingLogs(true);
@@ -414,6 +473,7 @@ export default function AdminPage() {
             { key: 'users' as const, icon: Users, label: 'Anunciantes' },
             { key: 'groups' as const, icon: Radio, label: 'Grupos' },
             { key: 'logs' as const, icon: ClipboardList, label: 'Logs' },
+            { key: 'instagram' as const, icon: Instagram, label: 'Instagram' },
             { key: 'settings' as const, icon: Settings, label: 'Config' },
           ].map(t => (
             <button
@@ -825,6 +885,78 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'instagram' && (
+          <div className="space-y-4">
+            <div className="bg-card border rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  <Instagram className="w-4 h-4" /> Monitorar Instagram
+                </h3>
+                <Button variant="outline" size="sm" onClick={handleRunIgNow} disabled={runningIg}>
+                  <RefreshCw className={`w-4 h-4 ${runningIg ? 'animate-spin' : ''}`} />
+                  Verificar agora
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cadastre até 3 perfis do Instagram Business. A cada 1 hora o sistema verifica novos posts e envia para todos os grupos ativos do WhatsApp.
+              </p>
+              <p className="text-[10px] text-muted-foreground bg-secondary/50 p-2 rounded-lg">
+                💡 Para encontrar o <b>ID Business</b> de uma conta, use o Graph API Explorer do Facebook (precisa ser conta Business/Creator vinculada a uma página).
+              </p>
+            </div>
+
+            {igMonitors.length < 3 && (
+              <div className="bg-card border rounded-xl p-4 space-y-3">
+                <h4 className="font-medium text-foreground text-sm">Adicionar perfil ({igMonitors.length}/3)</h4>
+                <Input
+                  value={igUsername}
+                  onChange={e => setIgUsername(e.target.value)}
+                  placeholder="@username"
+                  className="h-11 rounded-xl"
+                />
+                <Input
+                  value={igUserId}
+                  onChange={e => setIgUserId(e.target.value)}
+                  placeholder="ID Business da conta (ex: 17841400000000000)"
+                  className="h-11 rounded-xl"
+                />
+                <Button variant="cta" className="w-full" onClick={handleAddIgMonitor} disabled={savingIg}>
+                  <Plus className="w-4 h-4" />
+                  {savingIg ? 'Adicionando...' : 'Adicionar perfil'}
+                </Button>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {igMonitors.length === 0 ? (
+                <div className="bg-card border rounded-xl p-6 text-center text-sm text-muted-foreground">
+                  Nenhum perfil monitorado ainda.
+                </div>
+              ) : igMonitors.map(m => (
+                <div key={m.id} className="bg-card border rounded-xl p-4 flex items-center gap-3">
+                  <Instagram className="w-5 h-5 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm truncate">@{m.username}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">ID: {m.ig_user_id}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {m.last_checked_at ? `Última verificação: ${new Date(m.last_checked_at).toLocaleString('pt-BR')}` : 'Nunca verificado'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleIgMonitor(m.id, m.active)}
+                    className={`text-[10px] px-2 py-1 rounded-full font-medium ${m.active ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    {m.active ? 'Ativo' : 'Pausado'}
+                  </button>
+                  <button onClick={() => handleDeleteIgMonitor(m.id)} className="text-destructive p-1">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
