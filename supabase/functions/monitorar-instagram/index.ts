@@ -128,36 +128,57 @@ Deno.serve(async (req) => {
           continue
         }
 
-        const newPosts: any[] = []
-        for (const p of normalized) {
-          if (p.id === monitor.last_post_id) break
-          newPosts.push(p)
-        }
+        // Apenas a postagem mais recente
+        const latest = normalized[0]
 
-        if (newPosts.length === 0) {
+        const isNew = latest.id !== monitor.last_post_id
+        if (!isNew) {
           await supabase.from('instagram_monitors').update({ last_checked_at: new Date().toISOString() }).eq('id', monitor.id)
           continue
         }
 
-        for (const post of newPosts.reverse()) {
-          const message = `📸 *Nova publicação de @${username}*\n\n${post.caption}\n\n🔗 Ver no Instagram: ${post.permalink || ''}`
-          for (const group of activeGroups) {
-            await supabase.from('publication_queue').insert({
-              group_id: group.id,
-              message,
-              photo_url: post.image,
-              status: 'queued',
-            })
-          }
-          totalNewPosts += 1
+        // Verifica em quais grupos ainda não foi postado
+        const { data: alreadyPosted } = await supabase
+          .from('instagram_posted')
+          .select('group_id')
+          .eq('monitor_id', monitor.id)
+          .eq('post_id', latest.id)
+
+        const postedGroupIds = new Set((alreadyPosted || []).map((r: any) => r.group_id))
+        const targetGroups = activeGroups.filter((g: any) => !postedGroupIds.has(g.id))
+
+        if (targetGroups.length === 0) {
+          await supabase.from('instagram_monitors').update({
+            last_post_id: latest.id,
+            last_checked_at: new Date().toISOString(),
+          }).eq('id', monitor.id)
+          results.push({ username, info: 'já enviado em todos os grupos' })
+          continue
         }
 
+        const message = `📸 *Nova publicação de @${username}*\n\n${latest.caption}\n\n🔗 Ver no Instagram: ${latest.permalink || ''}`
+        for (const group of targetGroups) {
+          await supabase.from('publication_queue').insert({
+            group_id: group.id,
+            message,
+            photo_url: latest.image,
+            status: 'queued',
+          })
+          await supabase.from('instagram_posted').insert({
+            monitor_id: monitor.id,
+            group_id: group.id,
+            post_id: latest.id,
+          })
+        }
+        totalNewPosts += 1
+
         await supabase.from('instagram_monitors').update({
-          last_post_id: normalized[0].id,
+          last_post_id: latest.id,
           last_checked_at: new Date().toISOString(),
         }).eq('id', monitor.id)
 
-        results.push({ username, new_posts: newPosts.length, groups: activeGroups.length })
+        results.push({ username, posted_in_groups: targetGroups.length, post_id: latest.id })
+
       } catch (err: any) {
         results.push({ username: monitor.username, error: err.message })
       }
