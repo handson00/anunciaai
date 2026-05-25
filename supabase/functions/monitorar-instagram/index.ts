@@ -111,15 +111,37 @@ Deno.serve(async (req) => {
           continue
         }
 
-        const normalized = posts.map((p: any) => ({
-          id: p.id || p.shortCode,
-          caption: p.caption || '',
-          image: p.displayUrl || null,
-          permalink: p.url || (p.shortCode ? `https://www.instagram.com/p/${p.shortCode}/` : null),
-        }))
+        const normalized = posts
+          .map((p: any) => ({
+            id: p.shortCode || p.id,
+            caption: p.caption || '',
+            image: p.displayUrl || null,
+            permalink: p.url || (p.shortCode ? `https://www.instagram.com/p/${p.shortCode}/` : null),
+            timestamp: p.timestamp ? new Date(p.timestamp).getTime() : 0,
+            isPinned: !!p.isPinned,
+          }))
+          .filter((p: any) => p.id)
+          // Ignora posts fixados (pinned) que confundem a ordenação
+          .filter((p: any) => !p.isPinned)
+          // Ordena do mais novo para o mais antigo pelo timestamp real
+          .sort((a: any, b: any) => b.timestamp - a.timestamp)
 
-        // Primeira execução: só marca o último
-        if (!monitor.last_post_id) {
+        if (normalized.length === 0) {
+          await supabase.from('instagram_monitors').update({ last_checked_at: new Date().toISOString() }).eq('id', monitor.id)
+          results.push({ username, info: 'sem posts válidos' })
+          continue
+        }
+
+        // Busca TODOS os post_ids já registrados para esse monitor
+        const { data: alreadyPostedAll } = await supabase
+          .from('instagram_posted')
+          .select('post_id, group_id')
+          .eq('monitor_id', monitor.id)
+
+        const seenPostIds = new Set((alreadyPostedAll || []).map((r: any) => r.post_id))
+
+        // Primeira execução: marca o último como visto sem postar
+        if (!monitor.last_post_id && seenPostIds.size === 0) {
           await supabase.from('instagram_monitors').update({
             last_post_id: normalized[0].id,
             last_checked_at: new Date().toISOString(),
@@ -128,23 +150,19 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Apenas a postagem mais recente
-        const latest = normalized[0]
+        // Pega o post mais recente que AINDA NÃO foi visto por esse monitor
+        const latest = normalized.find((p: any) => !seenPostIds.has(p.id) && p.id !== monitor.last_post_id)
 
-        const isNew = latest.id !== monitor.last_post_id
-        if (!isNew) {
+        if (!latest) {
           await supabase.from('instagram_monitors').update({ last_checked_at: new Date().toISOString() }).eq('id', monitor.id)
+          results.push({ username, info: 'nenhum post novo' })
           continue
         }
 
-        // Verifica em quais grupos ainda não foi postado
-        const { data: alreadyPosted } = await supabase
-          .from('instagram_posted')
-          .select('group_id')
-          .eq('monitor_id', monitor.id)
-          .eq('post_id', latest.id)
-
-        const postedGroupIds = new Set((alreadyPosted || []).map((r: any) => r.group_id))
+        // Grupos onde ainda não foi postado
+        const postedGroupIds = new Set(
+          (alreadyPostedAll || []).filter((r: any) => r.post_id === latest.id).map((r: any) => r.group_id)
+        )
         const targetGroups = activeGroups.filter((g: any) => !postedGroupIds.has(g.id))
 
         if (targetGroups.length === 0) {
