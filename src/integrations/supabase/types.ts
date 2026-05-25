@@ -170,6 +170,30 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_posted: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          monitor_id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          monitor_id: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          monitor_id?: string
+          post_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
