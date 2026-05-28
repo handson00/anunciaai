@@ -42,7 +42,7 @@ interface CommunityGroup {
 export default function AdminPage() {
   const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram' | 'system'>('ads');
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -492,6 +492,7 @@ export default function AdminPage() {
             { key: 'logs' as const, icon: ClipboardList, label: 'Logs' },
             { key: 'instagram' as const, icon: Instagram, label: 'Instagram' },
             { key: 'settings' as const, icon: Settings, label: 'Config' },
+            { key: 'system' as const, icon: RefreshCw, label: 'Sistema' },
           ].map(t => (
             <button
               key={t.key}
