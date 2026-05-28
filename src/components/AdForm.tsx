@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Camera, Plus, X, Check, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { optimizeImage } from '@/utils/image-optimization';
 
 interface Props {
   category: AdCategory;
@@ -60,31 +61,47 @@ export function AdForm({ category, onBack, ad }: Props) {
   const showCondition = category === 'automobile' || category === 'product';
   const showBrand = category === 'product';
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_SIZE = 15 * 1024 * 1024; // Aumentamos para 15MB pois vamos comprimir
     const validFiles: File[] = [];
     
     Array.from(files).forEach(file => {
       if (file.size > MAX_SIZE) {
-        toast.error(`A imagem "${file.name}" é muito grande (máx 10MB)`);
+        toast.error(`A imagem "${file.name}" é muito grande (máx 15MB)`);
         return;
       }
       validFiles.push(file);
     });
 
-    validFiles.forEach(file => {
-      setPhotoFiles(prev => [...prev, file]);
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setPhotoPreviews(prev => [...prev, ev.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of validFiles) {
+      try {
+        // Mostra um toast de processamento se for imagem grande
+        const isLarge = file.size > 1024 * 1024;
+        if (isLarge) toast.info(`Otimizando "${file.name}"...`, { duration: 2000 });
+
+        const optimized = await optimizeImage(file, { maxWidth: 1200, quality: 0.75 });
+        
+        setPhotoFiles(prev => [...prev, optimized]);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setPhotoPreviews(prev => [...prev, ev.target?.result as string]);
+        };
+        reader.readAsDataURL(optimized);
+      } catch (err) {
+        console.error('Erro ao otimizar imagem:', err);
+        // Se falhar a otimização, tenta usar o original
+        setPhotoFiles(prev => [...prev, file]);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setPhotoPreviews(prev => [...prev, ev.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
     
-    // Clear input so same file can be selected again if removed
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -101,7 +118,7 @@ export function AdForm({ category, onBack, ad }: Props) {
     if (!currentUser) return [];
     const urls: string[] = [];
     for (const file of photoFiles) {
-      const ext = file.name.split('.').pop() || 'jpg';
+      const ext = 'webp'; // Sempre webp agora
       const path = `${currentUser.user_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from('ad-photos').upload(path, file);
       if (error) {

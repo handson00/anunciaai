@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
+import { optimizeImage } from '@/utils/image-optimization';
 
 export default function EditProfilePage() {
   const { currentUser, authUser, updateProfile } = useApp();
@@ -31,7 +32,15 @@ export default function EditProfilePage() {
     }
 
     setUploading(true);
-    const ext = file.name.split('.').pop();
+    
+    let fileToUpload = file;
+    try {
+      fileToUpload = await optimizeImage(file, { maxWidth: 400, maxHeight: 400, quality: 0.8 });
+    } catch (err) {
+      console.error('Erro ao otimizar avatar:', err);
+    }
+
+    const ext = 'webp';
     const path = `${authUser.id}/avatar.${ext}`;
 
     const { error } = await supabase.storage
