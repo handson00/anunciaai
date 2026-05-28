@@ -45,7 +45,7 @@ export default function EditProfilePage() {
 
     const { error } = await supabase.storage
       .from('avatars')
-      .upload(path, file, { upsert: true });
+      .upload(path, fileToUpload, { upsert: true });
 
     if (error) {
       toast.error('Erro ao enviar foto');
