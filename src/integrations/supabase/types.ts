@@ -204,6 +204,7 @@ export type Database = {
           name: string
           phone: string
           store_name: string | null
+          store_slug: string | null
           updated_at: string
           user_id: string
         }
@@ -216,6 +217,7 @@ export type Database = {
           name: string
           phone: string
           store_name?: string | null
+          store_slug?: string | null
           updated_at?: string
           user_id: string
         }
@@ -228,6 +230,7 @@ export type Database = {
           name?: string
           phone?: string
           store_name?: string | null
+          store_slug?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -455,12 +458,27 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      generate_unique_store_slug: {
+        Args: { _base: string; _user_id: string }
+        Returns: string
+      }
+      get_advertiser_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          avatar_url: string
+          name: string
+          store_name: string
+          store_slug: string
+          user_id: string
+        }[]
+      }
       get_public_advertisers: {
         Args: { _user_ids: string[] }
         Returns: {
           avatar_url: string
           name: string
           store_name: string
+          store_slug: string
           user_id: string
         }[]
       }
@@ -469,10 +487,12 @@ export type Database = {
         Args: { _worker_id: string }
         Returns: undefined
       }
+      slugify: { Args: { _input: string }; Returns: string }
       try_acquire_publication_worker: {
         Args: { _ttl_seconds?: number; _worker_id: string }
         Returns: boolean
       }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       ad_category: "automobile" | "product" | "property" | "service"

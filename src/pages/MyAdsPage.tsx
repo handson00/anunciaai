@@ -59,7 +59,8 @@ export default function MyAdsPage() {
   const handleShareStore = () => {
     if (!currentUser) return;
     const storeName = currentUser.store_name || currentUser.name || 'Minha loja';
-    const url = `${window.location.origin}/loja/${currentUser.user_id}`;
+    const handle = currentUser.store_slug || currentUser.user_id;
+    const url = `${window.location.origin}/loja/${handle}`;
     const text = `🏪 Confira a loja de *${storeName}* no AnunciaAI:\n${url}`;
     if (navigator.share) {
       navigator.share({ title: storeName, text, url }).catch(() => {});

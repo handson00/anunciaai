@@ -11,10 +11,14 @@ interface Advertiser {
   name: string;
   store_name?: string | null;
   avatar_url?: string | null;
+  store_slug?: string | null;
 }
 
+// UUID detector for backward compatibility with old /loja/{userId} links
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function StorePage() {
-  const { userId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [advertiser, setAdvertiser] = useState<Advertiser | null>(null);
   const [ads, setAds] = useState<Ad[]>([]);
@@ -22,26 +26,47 @@ export default function StorePage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!slug) return;
     (async () => {
       setLoading(true);
-      const [{ data: profiles }, { data: adsData }] = await Promise.all([
-        supabase.rpc('get_public_advertisers', { _user_ids: [userId] }),
-        supabase
-          .from('ads')
-          .select('id,user_id,category,title,price,main_photo,region,status,slug,is_sold,created_at')
-          .eq('user_id', userId)
-          .in('status', ['published', 'sold'])
-          .order('created_at', { ascending: false }),
-      ]);
-      setAdvertiser((profiles?.[0] as any) || null);
+      let profile: Advertiser | null = null;
+
+      if (UUID_RE.test(slug)) {
+        const { data } = await supabase.rpc('get_public_advertisers', { _user_ids: [slug] });
+        profile = (data?.[0] as any) || null;
+      } else {
+        const { data } = await supabase.rpc('get_advertiser_by_slug', { _slug: slug });
+        profile = (data?.[0] as any) || null;
+      }
+
+      if (!profile) {
+        setAdvertiser(null);
+        setAds([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: adsData } = await supabase
+        .from('ads')
+        .select('id,user_id,category,title,price,main_photo,region,status,slug,is_sold,created_at')
+        .eq('user_id', profile.user_id)
+        .in('status', ['published', 'sold'])
+        .order('created_at', { ascending: false });
+
+      setAdvertiser(profile);
       setAds((adsData || []) as Ad[]);
       setLoading(false);
+
+      // If user landed via UUID, replace URL with the nicer slug
+      if (UUID_RE.test(slug) && profile.store_slug) {
+        window.history.replaceState(null, '', `/loja/${profile.store_slug}`);
+      }
     })();
-  }, [userId]);
+  }, [slug]);
 
   const storeName = advertiser?.store_name || advertiser?.name || 'Loja';
-  const storeUrl = useMemo(() => `${window.location.origin}/loja/${userId}`, [userId]);
+  const storeHandle = advertiser?.store_slug || advertiser?.user_id || slug;
+  const storeUrl = useMemo(() => `${window.location.origin}/loja/${storeHandle}`, [storeHandle]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(storeUrl);

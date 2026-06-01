@@ -17,6 +17,7 @@ export interface Profile {
   created_at: string;
   avatar_url?: string | null;
   store_name?: string | null;
+  store_slug?: string | null;
 }
 
 export interface Ad {
