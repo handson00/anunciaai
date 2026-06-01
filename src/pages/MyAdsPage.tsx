@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 
@@ -18,7 +18,7 @@ const statusLabels: Record<string, { label: string; class: string }> = {
 };
 
 export default function MyAdsPage() {
-  const { getUserAds, deleteAd, updateAd } = useApp();
+  const { getUserAds, deleteAd, updateAd, currentUser } = useApp();
   const navigate = useNavigate();
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +56,19 @@ export default function MyAdsPage() {
     toast.success(message);
   };
 
+  const handleShareStore = () => {
+    if (!currentUser) return;
+    const storeName = currentUser.store_name || currentUser.name || 'Minha loja';
+    const url = `${window.location.origin}/loja/${currentUser.user_id}`;
+    const text = `🏪 Confira a loja de *${storeName}* no AnunciaAI:\n${url}`;
+    if (navigator.share) {
+      navigator.share({ title: storeName, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text);
+      toast.success('Link da loja copiado!');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b sticky top-0 z-10">
@@ -66,9 +79,14 @@ export default function MyAdsPage() {
             </Button>
             <h1 className="font-bold text-foreground">Meus anúncios</h1>
           </div>
-          <Button variant="cta" size="sm" onClick={() => navigate('/create-ad')}>
-            <Plus className="w-4 h-4" /> Novo
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleShareStore} title="Compartilhar minha loja">
+              <Share2 className="w-4 h-4" /> <span className="hidden sm:inline">Minha loja</span>
+            </Button>
+            <Button variant="cta" size="sm" onClick={() => navigate('/create-ad')}>
+              <Plus className="w-4 h-4" /> Novo
+            </Button>
+          </div>
         </div>
       </header>
 
