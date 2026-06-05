@@ -53,6 +53,7 @@ const App = () => (
               <Route path="/edit-profile" element={<EditProfilePage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/loja/:slug" element={<StorePage />} />
+              <Route path="/quem-somos" element={<AboutPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
