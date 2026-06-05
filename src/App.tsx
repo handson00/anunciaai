@@ -16,6 +16,7 @@ const AdminPage = lazy(() => import("./pages/AdminPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 const StorePage = lazy(() => import("./pages/StorePage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
