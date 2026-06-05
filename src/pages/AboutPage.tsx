@@ -51,7 +51,7 @@ export default function AboutPage() {
             Quem Somos
           </h1>
           <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
-            O <span className="text-cta font-semibold">AnunciaAI</span> é o marketplace da comunidade do Maranhão, 
+            O <span className="text-cta font-semibold">AnunciaAI</span> é o marketplace da comunidade de Coelho Neto - MA, 
             criado para conectar quem vende com quem compra de forma simples, rápida e segura.
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function AboutPage() {
           <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
             Democratizar o comércio local, oferecendo uma plataforma acessível onde qualquer pessoa 
             pode anunciar e vender seus produtos, imóveis, automóveis e serviços, fortalecendo a 
-            economia da nossa região e conectando pessoas de verdade.
+            economia de Coelho Neto - MA e conectando pessoas de verdade.
           </p>
         </section>
 
@@ -87,7 +87,7 @@ export default function AboutPage() {
             </div>
           </div>
           <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
-            Ser o principal ponto de encontro digital do Maranhão para compra e venda, 
+            Ser o principal ponto de encontro digital de Coelho Neto - MA para compra e venda, 
             reconhecido pela facilidade de uso, alcance imediato via WhatsApp e pela comunidade 
             ativa que transforma a maneira como o comércio local funciona.
           </p>
@@ -136,7 +136,7 @@ export default function AboutPage() {
       {/* Footer link */}
       <footer className="border-t py-4 px-4 text-center">
         <p className="text-xs text-muted-foreground">
-          AnunciaAI - O marketplace da comunidade do Maranhão
+          AnunciaAI - O marketplace da comunidade de Coelho Neto - MA
         </p>
       </footer>
     </div>
