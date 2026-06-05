@@ -280,6 +280,21 @@ export default function MarketplacePage() {
           </>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t py-6 px-4 mt-4">
+        <div className="container max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <p className="text-xs text-muted-foreground">
+            AnunciaAI - O marketplace da comunidade do Maranhão
+          </p>
+          <button
+            onClick={() => navigate('/quem-somos')}
+            className="text-xs text-cta hover:underline font-medium"
+          >
+            Quem Somos
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
