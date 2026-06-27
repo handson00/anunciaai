@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-re
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { DesktopShell } from '@/components/DesktopShell';
+import { thumb } from '@/utils/image-url';
 
 const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '📦', property: '🏠', service: '🔧',

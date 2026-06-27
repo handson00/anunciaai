@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { DesktopShell } from '@/components/DesktopShell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { thumb } from '@/utils/image-url';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
