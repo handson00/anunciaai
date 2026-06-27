@@ -4,6 +4,7 @@ import { LayoutDashboard, List, Plus, UserCog, Shield, LogOut, Store, Megaphone 
 import { useApp } from '@/contexts/AppContext';
 import logo from '@/assets/logo.png';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /**
  * DesktopShell
