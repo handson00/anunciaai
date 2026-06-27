@@ -4,6 +4,7 @@ import { Ad, useApp } from '@/contexts/AppContext';
 import { AdForm } from '@/components/AdForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { DesktopShell } from '@/components/DesktopShell';
 
 export default function EditAdPage() {
   const { slug } = useParams();
@@ -66,8 +67,9 @@ export default function EditAdPage() {
   }
 
   return (
+    <DesktopShell>
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b sticky top-0 z-10">
+      <header className="bg-card border-b sticky top-0 z-10 md:hidden">
         <div className="container max-w-lg mx-auto flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(`/ad/${ad.slug}`)}>
             <ArrowLeft className="w-5 h-5" />
@@ -76,7 +78,11 @@ export default function EditAdPage() {
         </div>
       </header>
 
-      <div className="container max-w-lg mx-auto px-4 py-6">
+      <div className="container max-w-lg md:max-w-3xl mx-auto px-4 md:px-8 py-6 md:py-10">
+        <div className="hidden md:block mb-6">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Catálogo</p>
+          <h1 className="text-2xl font-bold mt-1">Editar anúncio</h1>
+        </div>
         <AdForm
           category={ad.category}
           ad={ad}
@@ -84,5 +90,6 @@ export default function EditAdPage() {
         />
       </div>
     </div>
+    </DesktopShell>
   );
 }

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 import { StockManager } from '@/components/admin/stock/StockManager';
+import { DesktopShell } from '@/components/DesktopShell';
 
 const categoryLabels: Record<AdCategory, string> = {
   automobile: 'Automóvel', product: 'Produto', property: 'Imóvel', service: 'Serviço',
@@ -496,8 +497,9 @@ export default function AdminPage() {
   };
 
   return (
+    <DesktopShell>
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b sticky top-0 z-10">
+      <header className="bg-card border-b sticky top-0 z-10 md:hidden">
         <div className="container max-w-2xl mx-auto flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="w-5 h-5" />
@@ -506,7 +508,11 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="container max-w-2xl mx-auto px-4 py-4 space-y-4">
+      <div className="container max-w-2xl md:max-w-6xl mx-auto px-4 md:px-8 py-4 md:py-8 space-y-4">
+        <div className="hidden md:block">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Administração</p>
+          <h1 className="text-2xl font-bold mt-1">Painel administrativo</h1>
+        </div>
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-card border rounded-xl p-4 text-center">
@@ -1244,5 +1250,6 @@ export default function AdminPage() {
         )}
       </div>
     </div>
+    </DesktopShell>
   );
 }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+import { DesktopShell } from '@/components/DesktopShell';
 
 const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '📦', property: '🏠', service: '🔧',
@@ -71,8 +72,9 @@ export default function MyAdsPage() {
   };
 
   return (
+    <DesktopShell>
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b sticky top-0 z-10">
+      <header className="bg-card border-b sticky top-0 z-10 md:hidden">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
@@ -91,7 +93,21 @@ export default function MyAdsPage() {
         </div>
       </header>
 
-      <div className="container max-w-lg mx-auto px-4 py-6">
+      <div className="container max-w-lg md:max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-10">
+        <div className="hidden md:flex items-center justify-between mb-8">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Catálogo</p>
+            <h1 className="text-2xl font-bold mt-1">Meus anúncios</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleShareStore}>
+              <Share2 className="w-4 h-4" /> Compartilhar loja
+            </Button>
+            <Button variant="cta" onClick={() => navigate('/create-ad')}>
+              <Plus className="w-4 h-4" /> Novo anúncio
+            </Button>
+          </div>
+        </div>
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-2 border-cta border-t-transparent rounded-full animate-spin" />
@@ -168,5 +184,6 @@ export default function MyAdsPage() {
         )}
       </div>
     </div>
+    </DesktopShell>
   );
 }

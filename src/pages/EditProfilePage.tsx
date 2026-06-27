@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { optimizeImage } from '@/utils/image-optimization';
+import { DesktopShell } from '@/components/DesktopShell';
 
 export default function EditProfilePage() {
   const { currentUser, authUser, updateProfile } = useApp();
@@ -80,8 +81,9 @@ export default function EditProfilePage() {
   const initials = (currentUser?.name || 'U').slice(0, 2).toUpperCase();
 
   return (
+    <DesktopShell>
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b sticky top-0 z-10">
+      <header className="bg-card border-b sticky top-0 z-10 md:hidden">
         <div className="container max-w-lg mx-auto flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" aria-label="Voltar" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="w-5 h-5" />
@@ -90,7 +92,11 @@ export default function EditProfilePage() {
         </div>
       </header>
 
-      <div className="container max-w-lg mx-auto px-4 py-6 space-y-5 animate-fade-in-up">
+      <div className="container max-w-lg md:max-w-2xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-5 animate-fade-in-up">
+        <div className="hidden md:block">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Conta</p>
+          <h1 className="text-2xl font-bold mt-1">Editar cadastro</h1>
+        </div>
         {/* Avatar */}
         <div className="flex flex-col items-center gap-3">
           <button
@@ -155,5 +161,6 @@ export default function EditProfilePage() {
         </Button>
       </div>
     </div>
+    </DesktopShell>
   );
 }

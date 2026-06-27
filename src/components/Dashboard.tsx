@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, List, UserCog, LogOut, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import { DesktopShell } from '@/components/DesktopShell';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
@@ -80,8 +81,9 @@ export function Dashboard() {
   if (loading || !currentUser) return null;
 
   return (
+    <DesktopShell>
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b sticky top-0 z-10">
+      <header className="bg-card border-b sticky top-0 z-10 md:hidden">
         <div className="container max-w-lg mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <img src={logo} alt="anunciaAI" className="w-14 h-14" />
@@ -103,7 +105,11 @@ export function Dashboard() {
         </div>
       </header>
 
-      <main className="container max-w-lg mx-auto px-4 py-6 space-y-6">
+      <main className="container max-w-lg md:max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
+        <div className="hidden md:block">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Painel</p>
+          <h1 className="text-2xl font-bold mt-1">Bem-vindo de volta</h1>
+        </div>
         <div className="animate-fade-in-up flex items-center gap-4">
           {currentUser.avatar_url ? (
             <img src={currentUser.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-border flex-shrink-0" />
@@ -206,5 +212,6 @@ export function Dashboard() {
         )}
       </main>
     </div>
+    </DesktopShell>
   );
 }
