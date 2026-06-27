@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2, Copy, Check, Loader2, Store as StoreIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Ad } from '@/contexts/AppContext';
+import { thumb } from '@/utils/image-url';
 
 interface Advertiser {
   user_id: string;
@@ -127,7 +128,7 @@ export default function StorePage() {
         <div className="container max-w-5xl mx-auto text-center space-y-3">
           {advertiser.avatar_url ? (
             <img
-              src={advertiser.avatar_url}
+              src={thumb(advertiser.avatar_url, 192, 75)}
               alt={storeName}
               className="w-24 h-24 rounded-full object-cover mx-auto border-4 border-card shadow-md"
               width={96}
@@ -164,7 +165,7 @@ export default function StorePage() {
               >
                 <div className="aspect-square overflow-hidden bg-muted relative">
                   <img
-                    src={ad.main_photo}
+                    src={thumb(ad.main_photo, 400, 70)}
                     alt={ad.title}
                     loading="lazy"
                     decoding="async"
