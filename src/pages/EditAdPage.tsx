@@ -4,6 +4,7 @@ import { Ad, useApp } from '@/contexts/AppContext';
 import { AdForm } from '@/components/AdForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { DesktopShell } from '@/components/DesktopShell';
 
 export default function EditAdPage() {
   const { slug } = useParams();
