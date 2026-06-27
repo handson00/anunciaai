@@ -212,5 +212,6 @@ export function Dashboard() {
         )}
       </main>
     </div>
+    </DesktopShell>
   );
 }
