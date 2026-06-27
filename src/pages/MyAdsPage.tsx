@@ -133,7 +133,7 @@ export default function MyAdsPage() {
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {ad.main_photo ? (
-                    <img src={ad.main_photo} alt="" loading="lazy" decoding="async" width={64} height={64} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                    <img src={thumb(ad.main_photo, 160, 70)} alt="" loading="lazy" decoding="async" width={64} height={64} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 text-2xl">
                       {categoryEmoji[ad.category]}
