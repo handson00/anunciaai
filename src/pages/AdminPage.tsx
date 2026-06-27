@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 import { StockManager } from '@/components/admin/stock/StockManager';
+import { DesktopShell } from '@/components/DesktopShell';
 
 const categoryLabels: Record<AdCategory, string> = {
   automobile: 'Automóvel', product: 'Produto', property: 'Imóvel', service: 'Serviço',
