@@ -146,13 +146,16 @@ export default function MarketplacePage() {
                 <span className="sr-only"> — Marketplace da Comunidade</span>
               </h1>
             </div>
-            <Button 
-              className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
-              size="sm" 
-              onClick={() => navigate('/login')}
-            >
-              <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
-            </Button>
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <Button 
+                className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
+                size="sm" 
+                onClick={() => navigate('/login')}
+              >
+                <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
+              </Button>
+            </div>
           </div>
           
           {groupLink && (
