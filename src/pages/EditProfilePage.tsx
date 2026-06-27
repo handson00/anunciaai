@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { optimizeImage } from '@/utils/image-optimization';
+import { DesktopShell } from '@/components/DesktopShell';
 
 export default function EditProfilePage() {
   const { currentUser, authUser, updateProfile } = useApp();
