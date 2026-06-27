@@ -163,13 +163,13 @@ export default function StorePage() {
                 onClick={() => navigate(`/ad/${ad.slug}`)}
                 className="bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all text-left group"
               >
-                <div className="aspect-square overflow-hidden bg-gradient-to-br from-muted/60 to-muted relative flex items-center justify-center p-2">
+                <div className="aspect-square overflow-hidden bg-muted relative">
                   <img
-                    src={thumb(ad.main_photo, 600, 80)}
+                    src={thumb(ad.main_photo, 400, 70)}
                     alt={ad.title}
                     loading="lazy"
                     decoding="async"
-                    className={`max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`}
                   />
                   {ad.status === 'sold' && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20">
