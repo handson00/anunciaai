@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Megaphone, Users, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
 const ADS_PER_PAGE = 12;
