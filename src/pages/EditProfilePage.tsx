@@ -161,5 +161,6 @@ export default function EditProfilePage() {
         </Button>
       </div>
     </div>
+    </DesktopShell>
   );
 }
