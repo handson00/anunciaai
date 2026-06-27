@@ -93,7 +93,8 @@ export function Dashboard() {
               <span className="sr-only"> — Painel de Controle</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
             {currentUser.is_admin && (
               <Button variant="ghost" size="icon" aria-label="Painel administrativo" onClick={() => navigate('/admin')}>
                 <Shield className="w-5 h-5" />
