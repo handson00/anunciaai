@@ -1250,5 +1250,6 @@ export default function AdminPage() {
         )}
       </div>
     </div>
+    </DesktopShell>
   );
 }
