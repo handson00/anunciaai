@@ -27,8 +27,29 @@ export interface StockSale {
   customer_name: string | null;
   note: string | null;
   sold_at: string;
+  payment_type: 'cash' | 'installment';
+  installments_total: number;
+  amount_paid: number;
   // joined
   product_name?: string;
+}
+
+export interface SalePayment {
+  id: string;
+  sale_id: string;
+  amount: number;
+  paid_at: string;
+  note: string | null;
+}
+
+export async function listSalePayments(saleId: string): Promise<SalePayment[]> {
+  const { data, error } = await (supabase as any)
+    .from('stock_sale_payments')
+    .select('*')
+    .eq('sale_id', saleId)
+    .order('paid_at', { ascending: true });
+  if (error) { console.error(error); return []; }
+  return (data || []) as SalePayment[];
 }
 
 export interface DashboardKpis {

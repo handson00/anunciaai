@@ -525,13 +525,54 @@ export type Database = {
           },
         ]
       }
+      stock_sale_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          paid_at: string
+          sale_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          paid_at?: string
+          sale_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          paid_at?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_sale_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "stock_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_sales: {
         Row: {
+          amount_paid: number
           created_at: string
           created_by: string | null
           customer_name: string | null
           id: string
+          installments_total: number
           note: string | null
+          payment_type: string
           product_id: string
           profit: number | null
           quantity: number
@@ -541,11 +582,14 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          amount_paid?: number
           created_at?: string
           created_by?: string | null
           customer_name?: string | null
           id?: string
+          installments_total?: number
           note?: string | null
+          payment_type?: string
           product_id: string
           profit?: number | null
           quantity: number
@@ -555,11 +599,14 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          amount_paid?: number
           created_at?: string
           created_by?: string | null
           customer_name?: string | null
           id?: string
+          installments_total?: number
           note?: string | null
+          payment_type?: string
           product_id?: string
           profit?: number | null
           quantity?: number
