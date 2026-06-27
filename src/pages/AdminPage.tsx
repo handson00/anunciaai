@@ -1152,6 +1152,12 @@ export default function AdminPage() {
           </div>
         )}
 
+        {tab === 'stock' && currentUser?.can_manage_stock && (
+          <div className="animate-fade-in">
+            <StockManager currentUserId={currentUser.user_id} />
+          </div>
+        )}
+
         {tab === 'system' && (
           <div className="space-y-6 animate-fade-in">
             <div className="bg-card border rounded-xl p-4 space-y-4">
