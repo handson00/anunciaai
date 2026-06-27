@@ -184,5 +184,6 @@ export default function MyAdsPage() {
         )}
       </div>
     </div>
+    </DesktopShell>
   );
 }
