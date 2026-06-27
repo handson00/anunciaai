@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, List, UserCog, LogOut, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import { DesktopShell } from '@/components/DesktopShell';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
