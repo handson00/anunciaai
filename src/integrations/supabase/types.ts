@@ -198,6 +198,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           blocked: boolean
+          can_manage_stock: boolean
           created_at: string
           id: string
           is_admin: boolean
@@ -211,6 +212,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           blocked?: boolean
+          can_manage_stock?: boolean
           created_at?: string
           id?: string
           is_admin?: boolean
@@ -224,6 +226,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           blocked?: boolean
+          can_manage_stock?: boolean
           created_at?: string
           id?: string
           is_admin?: boolean
@@ -425,11 +428,162 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          product_id: string
+          quantity: number
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          product_id: string
+          quantity: number
+          type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          product_id?: string
+          quantity?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_products: {
+        Row: {
+          active: boolean
+          ad_id: string | null
+          category: string | null
+          cost_price: number
+          created_at: string
+          created_by: string | null
+          id: string
+          min_stock: number
+          name: string
+          photo_url: string | null
+          sale_price: number
+          sku: string | null
+          stock_qty: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          ad_id?: string | null
+          category?: string | null
+          cost_price?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          min_stock?: number
+          name: string
+          photo_url?: string | null
+          sale_price?: number
+          sku?: string | null
+          stock_qty?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          ad_id?: string | null
+          category?: string | null
+          cost_price?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          min_stock?: number
+          name?: string
+          photo_url?: string | null
+          sale_price?: number
+          sku?: string | null
+          stock_qty?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_products_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_sales: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          id: string
+          note: string | null
+          product_id: string
+          profit: number | null
+          quantity: number
+          sold_at: string
+          total: number | null
+          unit_cost: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          note?: string | null
+          product_id: string
+          profit?: number | null
+          quantity: number
+          sold_at?: string
+          total?: number | null
+          unit_cost?: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          note?: string | null
+          product_id?: string
+          profit?: number | null
+          quantity?: number
+          sold_at?: string
+          total?: number | null
+          unit_cost?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_manage_stock: { Args: never; Returns: boolean }
       claim_publication_queue: {
         Args: { _limit?: number; _worker_id: string }
         Returns: {
@@ -483,11 +637,25 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      list_admin_users: {
+        Args: never
+        Returns: {
+          can_manage_stock: boolean
+          is_admin: boolean
+          name: string
+          user_id: string
+        }[]
+      }
       release_publication_worker: {
         Args: { _worker_id: string }
         Returns: undefined
       }
+      set_stock_permission: {
+        Args: { _can: boolean; _target_user: string }
+        Returns: undefined
+      }
       slugify: { Args: { _input: string }; Returns: string }
+      stock_dashboard_kpis: { Args: never; Returns: Json }
       try_acquire_publication_worker: {
         Args: { _ttl_seconds?: number; _worker_id: string }
         Returns: boolean

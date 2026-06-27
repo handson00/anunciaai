@@ -4,8 +4,9 @@ import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
+import { StockManager } from '@/components/admin/stock/StockManager';
 
 const categoryLabels: Record<AdCategory, string> = {
   automobile: 'Automóvel', product: 'Produto', property: 'Imóvel', service: 'Serviço',
@@ -42,7 +43,7 @@ interface CommunityGroup {
 export default function AdminPage() {
   const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram' | 'system'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram' | 'system' | 'stock'>('ads');
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -523,20 +524,21 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {[
-            { key: 'ads' as const, icon: Megaphone, label: 'Anúncios' },
-            { key: 'users' as const, icon: Users, label: 'Anunciantes' },
-            { key: 'groups' as const, icon: Radio, label: 'Grupos' },
-            { key: 'logs' as const, icon: ClipboardList, label: 'Logs' },
-            { key: 'instagram' as const, icon: Instagram, label: 'Instagram' },
-            { key: 'settings' as const, icon: Settings, label: 'Config' },
-            { key: 'system' as const, icon: RefreshCw, label: 'Sistema' },
-          ].map(t => (
+            { key: 'ads' as const, icon: Megaphone, label: 'Anúncios', show: true },
+            { key: 'users' as const, icon: Users, label: 'Anunciantes', show: true },
+            { key: 'groups' as const, icon: Radio, label: 'Grupos', show: true },
+            { key: 'logs' as const, icon: ClipboardList, label: 'Logs', show: true },
+            { key: 'instagram' as const, icon: Instagram, label: 'Instagram', show: true },
+            { key: 'stock' as const, icon: Boxes, label: 'Estoque', show: !!currentUser?.can_manage_stock },
+            { key: 'settings' as const, icon: Settings, label: 'Config', show: true },
+            { key: 'system' as const, icon: RefreshCw, label: 'Sistema', show: true },
+          ].filter(t => t.show).map(t => (
             <button
               key={t.key}
               onClick={() => { setTab(t.key); setSearch(''); }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex-shrink-0 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
                 tab === t.key ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
               }`}
             >
@@ -1147,6 +1149,12 @@ export default function AdminPage() {
                 Deixe os campos vazios para usar as variáveis de ambiente padrão.
               </p>
             </div>
+          </div>
+        )}
+
+        {tab === 'stock' && currentUser?.can_manage_stock && (
+          <div className="animate-fade-in">
+            <StockManager currentUserId={currentUser.user_id} />
           </div>
         )}
 
