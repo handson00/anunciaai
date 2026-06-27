@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Megaphone, Users, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { thumb } from '@/utils/image-url';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
 const ADS_PER_PAGE = 12;
@@ -229,7 +230,7 @@ export default function MarketplacePage() {
                 >
                   <div className="aspect-square overflow-hidden bg-muted relative">
                     <img
-                      src={ad.main_photo}
+                      src={thumb(ad.main_photo, 400, 70)}
                       alt={ad.title}
                       loading={idx < 4 ? 'eager' : 'lazy'}
                       decoding="async"
