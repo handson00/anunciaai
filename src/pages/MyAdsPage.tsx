@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+import { DesktopShell } from '@/components/DesktopShell';
 
 const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '📦', property: '🏠', service: '🔧',
