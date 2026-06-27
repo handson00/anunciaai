@@ -136,7 +136,7 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-20">
-        <div className="container max-w-5xl mx-auto px-4 py-3">
+        <div className="container max-w-5xl xl:max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <img src={logo} alt="AnunciaAI" className="w-8 h-8 shrink-0" width={32} height={32} fetchPriority="high" />
@@ -166,7 +166,7 @@ export default function MarketplacePage() {
       </header>
 
       <div className="bg-gradient-to-b from-cta/10 to-background py-8 px-4">
-        <div className="container max-w-5xl mx-auto text-center space-y-4">
+        <div className="container max-w-5xl xl:max-w-7xl mx-auto text-center space-y-4">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
             Encontre o que procura 🔍
           </h2>
@@ -185,7 +185,7 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      <div className="container max-w-5xl mx-auto px-4 py-4">
+      <div className="container max-w-5xl xl:max-w-7xl mx-auto px-4 py-4">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {categoryFilters.map(cat => (
             <button
@@ -203,7 +203,7 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      <main className="container max-w-5xl mx-auto px-4 pb-12">
+      <main className="container max-w-5xl xl:max-w-7xl mx-auto px-4 pb-12">
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 text-cta animate-spin" />
@@ -283,7 +283,7 @@ export default function MarketplacePage() {
 
       {/* Footer */}
       <footer className="border-t py-6 px-4 mt-4">
-        <div className="container max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div className="container max-w-5xl xl:max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <p className="text-xs text-muted-foreground">
             AnunciaAI - O marketplace da comunidade de Coelho Neto - MA
           </p>
