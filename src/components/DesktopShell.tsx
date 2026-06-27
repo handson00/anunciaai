@@ -4,6 +4,7 @@ import { LayoutDashboard, List, Plus, UserCog, Shield, LogOut, Store, Megaphone 
 import { useApp } from '@/contexts/AppContext';
 import logo from '@/assets/logo.png';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /**
  * DesktopShell
@@ -122,6 +123,7 @@ export function DesktopShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="px-3 py-4 border-t border-border space-y-1">
+          <ThemeToggle variant="full" />
           <button
             onClick={() => navigate('/')}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground transition-colors"

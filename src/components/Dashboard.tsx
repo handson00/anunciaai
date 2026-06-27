@@ -6,6 +6,7 @@ import { Plus, List, UserCog, LogOut, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { DesktopShell } from '@/components/DesktopShell';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
@@ -92,7 +93,8 @@ export function Dashboard() {
               <span className="sr-only"> — Painel de Controle</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
             {currentUser.is_admin && (
               <Button variant="ghost" size="icon" aria-label="Painel administrativo" onClick={() => navigate('/admin')}>
                 <Shield className="w-5 h-5" />

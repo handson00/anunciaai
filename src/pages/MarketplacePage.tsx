@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Megaphone, Users, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
 const ADS_PER_PAGE = 12;
@@ -145,13 +146,16 @@ export default function MarketplacePage() {
                 <span className="sr-only"> — Marketplace da Comunidade</span>
               </h1>
             </div>
-            <Button 
-              className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
-              size="sm" 
-              onClick={() => navigate('/login')}
-            >
-              <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
-            </Button>
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <Button 
+                className="bg-cta hover:bg-cta/90 text-cta-foreground font-bold shadow-lg animate-pulse-slow hover:animate-none transition-all"
+                size="sm" 
+                onClick={() => navigate('/login')}
+              >
+                <Megaphone className="w-4 h-4 mr-1" /> Anunciar aqui
+              </Button>
+            </div>
           </div>
           
           {groupLink && (
