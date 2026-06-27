@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { DesktopShell } from '@/components/DesktopShell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { thumb } from '@/utils/image-url';
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   draft: { label: 'Rascunho', class: 'bg-muted text-muted-foreground' },
@@ -114,7 +115,7 @@ export function Dashboard() {
         </div>
         <div className="animate-fade-in-up flex items-center gap-4">
           {currentUser.avatar_url ? (
-            <img src={currentUser.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-border flex-shrink-0" />
+            <img src={thumb(currentUser.avatar_url, 128, 75)} alt="" loading="lazy" decoding="async" className="w-14 h-14 rounded-full object-cover border-2 border-border flex-shrink-0" />
           ) : (
             <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground flex-shrink-0 border-2 border-border">
               {currentUser.name.slice(0, 2).toUpperCase()}
@@ -193,7 +194,7 @@ export function Dashboard() {
                     className="w-full bg-card rounded-xl p-4 flex items-center gap-3 border shadow-sm hover:shadow-md transition-shadow active:scale-[0.98] text-left"
                   >
                     {ad.main_photo ? (
-                      <img src={ad.main_photo} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                      <img src={thumb(ad.main_photo, 128, 70)} alt="" loading="lazy" decoding="async" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
                     ) : (
                       <div className="w-14 h-14 rounded-lg bg-muted flex-shrink-0" />
                     )}

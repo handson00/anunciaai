@@ -4,8 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
-import Index from "./pages/Index";
-
+const Index = lazy(() => import("./pages/Index"));
 const Dashboard = lazy(() => import("./components/Dashboard").then(m => ({ default: m.Dashboard })));
 const CreateAdPage = lazy(() => import("./pages/CreateAdPage"));
 const EditAdPage = lazy(() => import("./pages/EditAdPage"));

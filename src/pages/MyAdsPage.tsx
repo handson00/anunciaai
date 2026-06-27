@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-re
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { DesktopShell } from '@/components/DesktopShell';
+import { thumb } from '@/utils/image-url';
 
 const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '📦', property: '🏠', service: '🔧',
@@ -133,7 +134,7 @@ export default function MyAdsPage() {
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {ad.main_photo ? (
-                    <img src={ad.main_photo} alt="" loading="lazy" decoding="async" width={64} height={64} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                    <img src={thumb(ad.main_photo, 160, 70)} alt="" loading="lazy" decoding="async" width={64} height={64} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 text-2xl">
                       {categoryEmoji[ad.category]}
