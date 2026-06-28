@@ -4,9 +4,10 @@ import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { StockManager } from '@/components/admin/stock/StockManager';
+import { ScheduledMessages } from '@/components/admin/ScheduledMessages';
 import { DesktopShell } from '@/components/DesktopShell';
 
 const categoryLabels: Record<AdCategory, string> = {
@@ -44,7 +45,7 @@ interface CommunityGroup {
 export default function AdminPage() {
   const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram' | 'system' | 'stock'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'scheduled' | 'settings' | 'logs' | 'instagram' | 'system' | 'stock'>('ads');
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -535,6 +536,7 @@ export default function AdminPage() {
             { key: 'ads' as const, icon: Megaphone, label: 'Anúncios', show: true },
             { key: 'users' as const, icon: Users, label: 'Anunciantes', show: true },
             { key: 'groups' as const, icon: Radio, label: 'Grupos', show: true },
+            { key: 'scheduled' as const, icon: CalendarClock, label: 'Agendar', show: true },
             { key: 'logs' as const, icon: ClipboardList, label: 'Logs', show: true },
             { key: 'instagram' as const, icon: Instagram, label: 'Instagram', show: true },
             { key: 'stock' as const, icon: Boxes, label: 'Estoque', show: !!currentUser?.can_manage_stock },
@@ -1158,11 +1160,18 @@ export default function AdminPage() {
           </div>
         )}
 
+        {tab === 'scheduled' && (
+          <div className="animate-fade-in">
+            <ScheduledMessages groups={groups.map(g => ({ id: g.id, name: g.name }))} />
+          </div>
+        )}
+
         {tab === 'stock' && currentUser?.can_manage_stock && (
           <div className="animate-fade-in">
             <StockManager currentUserId={currentUser.user_id} />
           </div>
         )}
+
 
         {tab === 'system' && (
           <div className="space-y-6 animate-fade-in">

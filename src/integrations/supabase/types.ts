@@ -428,6 +428,69 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_messages: {
+        Row: {
+          buttons: Json | null
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          group_ids: string[]
+          id: string
+          last_error: string | null
+          last_run_at: string | null
+          media_url: string | null
+          message_type: string
+          next_run_at: string
+          poll_options: Json | null
+          recurrence: string
+          scheduled_at: string
+          status: string
+          text: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          buttons?: Json | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          group_ids?: string[]
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          media_url?: string | null
+          message_type: string
+          next_run_at: string
+          poll_options?: Json | null
+          recurrence?: string
+          scheduled_at: string
+          status?: string
+          text?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buttons?: Json | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          group_ids?: string[]
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          media_url?: string | null
+          message_type?: string
+          next_run_at?: string
+          poll_options?: Json | null
+          recurrence?: string
+          scheduled_at?: string
+          status?: string
+          text?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string
