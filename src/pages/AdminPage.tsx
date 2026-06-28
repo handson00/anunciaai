@@ -1160,11 +1160,18 @@ export default function AdminPage() {
           </div>
         )}
 
+        {tab === 'scheduled' && (
+          <div className="animate-fade-in">
+            <ScheduledMessages groups={groups.map(g => ({ id: g.id, name: g.name }))} />
+          </div>
+        )}
+
         {tab === 'stock' && currentUser?.can_manage_stock && (
           <div className="animate-fade-in">
             <StockManager currentUserId={currentUser.user_id} />
           </div>
         )}
+
 
         {tab === 'system' && (
           <div className="space-y-6 animate-fade-in">
