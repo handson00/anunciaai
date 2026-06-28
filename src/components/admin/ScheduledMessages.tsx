@@ -66,6 +66,34 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
   const [scheduledAt, setScheduledAt] = useState('');
   const [recurrence, setRecurrence] = useState('none');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const isUploadType = ['image','video','audio','document'].includes(messageType);
+  const acceptByType: Record<string,string> = {
+    image: 'image/*', video: 'video/*', audio: 'audio/*', document: '.pdf,.doc,.docx,.xls,.xlsx,.zip',
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (file.size > 50 * 1024 * 1024) return toast.error('Arquivo maior que 50MB');
+    setUploading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      const ext = file.name.split('.').pop() || 'bin';
+      const path = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error } = await supabase.storage.from('scheduled-media').upload(path, file, {
+        contentType: file.type, upsert: false,
+      });
+      if (error) throw error;
+      setMediaUrl(`storage://scheduled-media/${path}`);
+      if (messageType === 'document' && !fileName) setFileName(file.name);
+      toast.success('Mídia enviada');
+    } catch (e: any) {
+      toast.error('Falha no upload: ' + e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
