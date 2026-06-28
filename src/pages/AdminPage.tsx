@@ -4,9 +4,10 @@ import { useApp, AdCategory, Ad, Profile } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes } from 'lucide-react';
+import { ArrowLeft, Users, Megaphone, Trash2, Ban, CheckCircle, Search, ChevronDown, ChevronUp, Plus, Radio, X, Pencil, Save, RefreshCw, Download, Settings, Eye, EyeOff, MessageSquare, Send, ClipboardList, Instagram, Boxes, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { StockManager } from '@/components/admin/stock/StockManager';
+import { ScheduledMessages } from '@/components/admin/ScheduledMessages';
 import { DesktopShell } from '@/components/DesktopShell';
 
 const categoryLabels: Record<AdCategory, string> = {
