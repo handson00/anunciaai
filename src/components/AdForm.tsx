@@ -380,7 +380,30 @@ export function AdForm({ category, onBack, ad }: Props) {
           onChange={e => setRegion(e.target.value)}
           placeholder="Ex: Coelho Neto - MA, Duque Bacelar - MA..."
           className="h-12 rounded-xl"
+          list="city-options"
+          autoComplete="off"
         />
+        <datalist id="city-options">
+          {cityOptions.map(c => <option key={c} value={c} />)}
+        </datalist>
+        {cityOptions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {cityOptions.slice(0, 8).map(c => (
+              <button
+                type="button"
+                key={c}
+                onClick={() => setRegion(c)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  region === c
+                    ? 'bg-accent text-accent-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/40'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Contact */}
