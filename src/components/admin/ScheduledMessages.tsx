@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Trash2, Play, Pause, Plus, X, ChevronDown, ChevronUp, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Trash2, Play, Pause, Plus, X, ChevronDown, ChevronUp, RefreshCw, CheckCircle2, AlertCircle, Upload, Loader2 } from 'lucide-react';
 
 interface Group { id: string; name: string; }
 
@@ -66,6 +66,34 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
   const [scheduledAt, setScheduledAt] = useState('');
   const [recurrence, setRecurrence] = useState('none');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const isUploadType = ['image','video','audio','document'].includes(messageType);
+  const acceptByType: Record<string,string> = {
+    image: 'image/*', video: 'video/*', audio: 'audio/*', document: '.pdf,.doc,.docx,.xls,.xlsx,.zip',
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (file.size > 50 * 1024 * 1024) return toast.error('Arquivo maior que 50MB');
+    setUploading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      const ext = file.name.split('.').pop() || 'bin';
+      const path = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error } = await supabase.storage.from('scheduled-media').upload(path, file, {
+        contentType: file.type, upsert: false,
+      });
+      if (error) throw error;
+      setMediaUrl(`storage://scheduled-media/${path}`);
+      if (messageType === 'document' && !fileName) setFileName(file.name);
+      toast.success('Mídia enviada');
+    } catch (e: any) {
+      toast.error('Falha no upload: ' + e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -204,13 +232,29 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
             placeholder={messageType === 'poll' || messageType === 'buttons' ? 'Texto/pergunta' : 'Mensagem'}
             value={text} onChange={e => setText(e.target.value)} />
 
-          {['image','video','audio','document'].includes(messageType) && (
-            <>
-              <Input placeholder="URL da mídia (https://...)" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} />
+          {isUploadType && (
+            <div className="space-y-2">
+              <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-3 text-sm cursor-pointer hover:bg-accent/50 transition">
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                <span>{uploading ? 'Enviando...' : `Enviar ${messageType === 'image' ? 'imagem' : messageType === 'video' ? 'vídeo' : messageType === 'audio' ? 'áudio' : 'documento'} (máx. 50MB)`}</span>
+                <input type="file" className="hidden" accept={acceptByType[messageType]} disabled={uploading}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); e.target.value = ''; }} />
+              </label>
+              {mediaUrl && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary rounded p-2">
+                  <CheckCircle2 className="w-3 h-3 text-accent-foreground shrink-0" />
+                  <span className="truncate flex-1">{mediaUrl.startsWith('storage://') ? mediaUrl.split('/').pop() : mediaUrl}</span>
+                  <button type="button" onClick={() => setMediaUrl('')}><X className="w-3 h-3" /></button>
+                </div>
+              )}
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground">Ou colar URL externa</summary>
+                <Input className="mt-1" placeholder="https://..." value={mediaUrl.startsWith('storage://') ? '' : mediaUrl} onChange={e => setMediaUrl(e.target.value)} />
+              </details>
               {messageType === 'document' && (
                 <Input placeholder="Nome do arquivo (ex: catalogo.pdf)" value={fileName} onChange={e => setFileName(e.target.value)} />
               )}
-            </>
+            </div>
           )}
 
           {messageType === 'poll' && (

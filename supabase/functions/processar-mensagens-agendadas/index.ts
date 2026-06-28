@@ -22,7 +22,7 @@ function computeNext(current: Date, recurrence: string): Date | null {
   }
 }
 
-async function sendViaUazapi(uazapiUrl: string, uazapiToken: string, groupId: string, msg: any) {
+async function sendViaUazapi(uazapiUrl: string, uazapiToken: string, groupId: string, msg: any, resolvedMediaUrl?: string) {
   const base = `${uazapiUrl}`;
   const tokenParam = `?token=${uazapiToken}`;
   const headers = { 'Content-Type': 'application/json' };
@@ -42,7 +42,7 @@ async function sendViaUazapi(uazapiUrl: string, uazapiToken: string, groupId: st
       body = {
         number: groupId,
         type: msg.message_type,
-        file: msg.media_url,
+        file: resolvedMediaUrl || msg.media_url,
         text: msg.text || '',
         docName: msg.file_name || undefined,
       };
@@ -131,6 +131,20 @@ Deno.serve(async (req) => {
       processed++;
       const errors: string[] = [];
 
+      // Resolve storage:// media URL to a signed URL (valid 7 days)
+      let resolvedMediaUrl: string | undefined;
+      if (msg.media_url && typeof msg.media_url === 'string' && msg.media_url.startsWith('storage://')) {
+        const rest = msg.media_url.replace('storage://', '');
+        const [bucket, ...pathParts] = rest.split('/');
+        const path = pathParts.join('/');
+        const { data: signed, error: signErr } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+        if (signErr || !signed) {
+          console.error('Sign error:', signErr);
+        } else {
+          resolvedMediaUrl = signed.signedUrl;
+        }
+      }
+
       const { data: groups } = await supabase
         .from('community_groups')
         .select('id, name, whatsapp_group_id')
@@ -138,7 +152,7 @@ Deno.serve(async (req) => {
 
       for (const g of groups || []) {
         try {
-          const res = await sendViaUazapi(uazapiUrl, uazapiToken, g.whatsapp_group_id, msg);
+          const res = await sendViaUazapi(uazapiUrl, uazapiToken, g.whatsapp_group_id, msg, resolvedMediaUrl);
           await supabase.from('publication_logs').insert({
             group_id: g.id,
             status: 'success',
