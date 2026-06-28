@@ -22,7 +22,7 @@ function computeNext(current: Date, recurrence: string): Date | null {
   }
 }
 
-async function sendViaUazapi(uazapiUrl: string, uazapiToken: string, groupId: string, msg: any) {
+async function sendViaUazapi(uazapiUrl: string, uazapiToken: string, groupId: string, msg: any, resolvedMediaUrl?: string) {
   const base = `${uazapiUrl}`;
   const tokenParam = `?token=${uazapiToken}`;
   const headers = { 'Content-Type': 'application/json' };
