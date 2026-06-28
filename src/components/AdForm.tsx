@@ -51,6 +51,24 @@ export function AdForm({ category, onBack, ad }: Props) {
     ad ? formatPhone(ad.contact_phone) : (currentUser ? formatPhone(currentUser.phone) : '')
   );
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [cityOptions, setCityOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('ads')
+        .select('region')
+        .not('region', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (data) {
+        const uniq = Array.from(new Set(
+          data.map((r: any) => (r.region || '').trim()).filter(Boolean)
+        )).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        setCityOptions(uniq);
+      }
+    })();
+  }, []);
   // Existing remote photo URLs (edit mode). First item is the main photo.
   const [existingPhotos, setExistingPhotos] = useState<string[]>(
     ad ? [ad.main_photo, ...(ad.photos || [])] : []
