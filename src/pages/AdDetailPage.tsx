@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil } from 'lucide-react';
+import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +30,7 @@ export default function AdDetailPage() {
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -144,7 +145,7 @@ export default function AdDetailPage() {
       <main className="container max-w-lg mx-auto">
         {/* Photos */}
         <div className="relative bg-foreground/5">
-          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" className={`w-full aspect-[4/3] object-cover ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`} />
+          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" onClick={() => setLightboxOpen(true)} className={`w-full aspect-[4/3] object-cover cursor-zoom-in ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`} />
           {ad.status === 'sold' && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
               <span className="bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xl uppercase tracking-wider transform -rotate-12 border-4 border-white shadow-lg">
@@ -271,6 +272,40 @@ export default function AdDetailPage() {
           )}
         </div>
       </div>
+
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            aria-label="Fechar"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={allPhotos[currentPhoto]}
+            alt={ad.title}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain cursor-zoom-out"
+          />
+          {allPhotos.length > 1 && (
+            <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2">
+              {allPhotos.map((_, i) => (
+                <button
+                  key={i}
+                  aria-label={`Foto ${i + 1}`}
+                  onClick={(e) => { e.stopPropagation(); setCurrentPhoto(i); }}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentPhoto ? 'bg-white w-6' : 'bg-white/50'}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
