@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Trash2, Play, Pause, Plus, X } from 'lucide-react';
+import { Trash2, Play, Pause, Plus, X, ChevronDown, ChevronUp, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface Group { id: string; name: string; }
 
@@ -50,6 +50,9 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
   const [items, setItems] = useState<Scheduled[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [logs, setLogs] = useState<Record<string, any[]>>({});
+  const groupMap = Object.fromEntries(groups.map(g => [g.id, g.name]));
 
   // Form state
   const [title, setTitle] = useState('');
@@ -74,7 +77,25 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
+  }, []);
+
+  const toggleExpand = async (id: string) => {
+    const willOpen = !expanded[id];
+    setExpanded(e => ({ ...e, [id]: willOpen }));
+    if (willOpen && !logs[id]) {
+      const { data } = await supabase
+        .from('publication_logs')
+        .select('id, group_id, status, message, api_response, created_at')
+        .contains('api_response', { scheduled_id: id })
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setLogs(l => ({ ...l, [id]: data || [] }));
+    }
+  };
 
   const reset = () => {
     setTitle(''); setSelectedGroups([]); setMessageType('text'); setText('');
@@ -145,6 +166,9 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
         </Button>
         <Button variant="outline" onClick={runNow}>
           <Play className="w-4 h-4 mr-1" /> Executar agora
+        </Button>
+        <Button variant="outline" size="icon" onClick={load} title="Atualizar">
+          <RefreshCw className="w-4 h-4" />
         </Button>
       </div>
 
@@ -262,12 +286,24 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
               Próximo envio: {new Date(it.next_run_at).toLocaleString('pt-BR')} · {RECURRENCES.find(r => r.value === it.recurrence)?.label}
             </p>
             <p className="text-xs text-muted-foreground">
-              {it.group_ids.length} grupo(s) · Tipo: {TYPES.find(t => t.value === it.message_type)?.label}
+              Tipo: {TYPES.find(t => t.value === it.message_type)?.label} · {it.group_ids.length} grupo(s)
             </p>
+            <div className="flex flex-wrap gap-1">
+              {it.group_ids.map(gid => (
+                <span key={gid} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">
+                  {groupMap[gid] || gid.slice(0, 6)}
+                </span>
+              ))}
+            </div>
             {it.text && <p className="text-xs line-clamp-2">{it.text}</p>}
+            {it.last_run_at && (
+              <p className="text-xs text-muted-foreground">
+                Último envio: {new Date(it.last_run_at).toLocaleString('pt-BR')}
+              </p>
+            )}
             {it.last_error && <p className="text-xs text-destructive">Último erro: {it.last_error}</p>}
-            <div className="flex gap-2 pt-1">
-              {it.status === 'pending' || it.status === 'running' ? (
+            <div className="flex gap-2 pt-1 flex-wrap">
+              {(it.status === 'pending' || it.status === 'running') ? (
                 <Button size="sm" variant="outline" onClick={() => cancel(it.id)}>
                   <Pause className="w-3 h-3 mr-1" /> Cancelar
                 </Button>
@@ -276,10 +312,39 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
                   <Play className="w-3 h-3 mr-1" /> Reativar
                 </Button>
               )}
+              <Button size="sm" variant="outline" onClick={() => toggleExpand(it.id)}>
+                {expanded[it.id] ? <ChevronUp className="w-3 h-3 mr-1" /> : <ChevronDown className="w-3 h-3 mr-1" />}
+                Detalhes
+              </Button>
               <Button size="sm" variant="ghost" onClick={() => remove(it.id)}>
                 <Trash2 className="w-3 h-3 text-destructive" />
               </Button>
             </div>
+            {expanded[it.id] && (
+              <div className="mt-2 border-t pt-2 space-y-1">
+                <p className="text-xs font-semibold">Histórico de envios por grupo:</p>
+                {!logs[it.id] && <p className="text-xs text-muted-foreground">Carregando...</p>}
+                {logs[it.id]?.length === 0 && <p className="text-xs text-muted-foreground">Sem envios ainda.</p>}
+                {logs[it.id]?.map((lg: any) => {
+                  const gname = groups.find(g => g.id === lg.group_id)?.name || lg.group_id?.slice(0, 6);
+                  const ok = lg.status === 'success';
+                  return (
+                    <div key={lg.id} className="flex items-start gap-2 text-xs">
+                      {ok
+                        ? <CheckCircle2 className="w-3 h-3 mt-0.5 text-accent-foreground shrink-0" />
+                        : <AlertCircle className="w-3 h-3 mt-0.5 text-destructive shrink-0" />}
+                      <div className="flex-1">
+                        <span className="font-medium">{gname}</span>
+                        <span className="text-muted-foreground"> · {new Date(lg.created_at).toLocaleString('pt-BR')}</span>
+                        {!ok && lg.api_response?.error && (
+                          <p className="text-destructive break-words">{lg.api_response.error}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ))}
       </div>
