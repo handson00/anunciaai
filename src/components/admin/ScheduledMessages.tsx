@@ -232,13 +232,29 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
             placeholder={messageType === 'poll' || messageType === 'buttons' ? 'Texto/pergunta' : 'Mensagem'}
             value={text} onChange={e => setText(e.target.value)} />
 
-          {['image','video','audio','document'].includes(messageType) && (
-            <>
-              <Input placeholder="URL da mídia (https://...)" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} />
+          {isUploadType && (
+            <div className="space-y-2">
+              <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-3 text-sm cursor-pointer hover:bg-accent/50 transition">
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                <span>{uploading ? 'Enviando...' : `Enviar ${messageType === 'image' ? 'imagem' : messageType === 'video' ? 'vídeo' : messageType === 'audio' ? 'áudio' : 'documento'} (máx. 50MB)`}</span>
+                <input type="file" className="hidden" accept={acceptByType[messageType]} disabled={uploading}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); e.target.value = ''; }} />
+              </label>
+              {mediaUrl && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary rounded p-2">
+                  <CheckCircle2 className="w-3 h-3 text-accent-foreground shrink-0" />
+                  <span className="truncate flex-1">{mediaUrl.startsWith('storage://') ? mediaUrl.split('/').pop() : mediaUrl}</span>
+                  <button type="button" onClick={() => setMediaUrl('')}><X className="w-3 h-3" /></button>
+                </div>
+              )}
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground">Ou colar URL externa</summary>
+                <Input className="mt-1" placeholder="https://..." value={mediaUrl.startsWith('storage://') ? '' : mediaUrl} onChange={e => setMediaUrl(e.target.value)} />
+              </details>
               {messageType === 'document' && (
                 <Input placeholder="Nome do arquivo (ex: catalogo.pdf)" value={fileName} onChange={e => setFileName(e.target.value)} />
               )}
-            </>
+            </div>
           )}
 
           {messageType === 'poll' && (
