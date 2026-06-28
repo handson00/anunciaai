@@ -30,6 +30,7 @@ export default function AdDetailPage() {
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (slug) {
