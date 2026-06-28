@@ -50,6 +50,9 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
   const [items, setItems] = useState<Scheduled[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [logs, setLogs] = useState<Record<string, any[]>>({});
+  const groupMap = Object.fromEntries(groups.map(g => [g.id, g.name]));
 
   // Form state
   const [title, setTitle] = useState('');
