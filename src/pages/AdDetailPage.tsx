@@ -145,7 +145,7 @@ export default function AdDetailPage() {
       <main className="container max-w-lg mx-auto">
         {/* Photos */}
         <div className="relative bg-foreground/5">
-          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" className={`w-full aspect-[4/3] object-cover ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`} />
+          <img src={allPhotos[currentPhoto]} alt={ad.title} fetchPriority="high" decoding="async" onClick={() => setLightboxOpen(true)} className={`w-full aspect-[4/3] object-cover cursor-zoom-in ${ad.status === 'sold' ? 'grayscale opacity-75' : ''}`} />
           {ad.status === 'sold' && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
               <span className="bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xl uppercase tracking-wider transform -rotate-12 border-4 border-white shadow-lg">
