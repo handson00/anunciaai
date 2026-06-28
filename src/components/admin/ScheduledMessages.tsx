@@ -167,6 +167,9 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
         <Button variant="outline" onClick={runNow}>
           <Play className="w-4 h-4 mr-1" /> Executar agora
         </Button>
+        <Button variant="outline" size="icon" onClick={load} title="Atualizar">
+          <RefreshCw className="w-4 h-4" />
+        </Button>
       </div>
 
       {showForm && (
