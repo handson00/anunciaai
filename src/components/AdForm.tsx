@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdCategory, useApp, Ad } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
