@@ -42,7 +42,7 @@ async function sendViaUazapi(uazapiUrl: string, uazapiToken: string, groupId: st
       body = {
         number: groupId,
         type: msg.message_type,
-        file: msg.media_url,
+        file: resolvedMediaUrl || msg.media_url,
         text: msg.text || '',
         docName: msg.file_name || undefined,
       };
