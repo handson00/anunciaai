@@ -536,6 +536,7 @@ export default function AdminPage() {
             { key: 'ads' as const, icon: Megaphone, label: 'Anúncios', show: true },
             { key: 'users' as const, icon: Users, label: 'Anunciantes', show: true },
             { key: 'groups' as const, icon: Radio, label: 'Grupos', show: true },
+            { key: 'scheduled' as const, icon: CalendarClock, label: 'Agendar', show: true },
             { key: 'logs' as const, icon: ClipboardList, label: 'Logs', show: true },
             { key: 'instagram' as const, icon: Instagram, label: 'Instagram', show: true },
             { key: 'stock' as const, icon: Boxes, label: 'Estoque', show: !!currentUser?.can_manage_stock },
