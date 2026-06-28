@@ -45,7 +45,7 @@ interface CommunityGroup {
 export default function AdminPage() {
   const { currentUser, fetchAds, fetchUsers, ads, users, deleteAd } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'settings' | 'logs' | 'instagram' | 'system' | 'stock'>('ads');
+  const [tab, setTab] = useState<'ads' | 'users' | 'groups' | 'scheduled' | 'settings' | 'logs' | 'instagram' | 'system' | 'stock'>('ads');
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
