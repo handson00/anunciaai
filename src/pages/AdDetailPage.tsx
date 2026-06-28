@@ -272,6 +272,40 @@ export default function AdDetailPage() {
           )}
         </div>
       </div>
+
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            aria-label="Fechar"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={allPhotos[currentPhoto]}
+            alt={ad.title}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain cursor-zoom-out"
+          />
+          {allPhotos.length > 1 && (
+            <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2">
+              {allPhotos.map((_, i) => (
+                <button
+                  key={i}
+                  aria-label={`Foto ${i + 1}`}
+                  onClick={(e) => { e.stopPropagation(); setCurrentPhoto(i); }}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentPhoto ? 'bg-white w-6' : 'bg-white/50'}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
