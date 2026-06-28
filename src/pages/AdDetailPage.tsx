@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil } from 'lucide-react';
+import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
