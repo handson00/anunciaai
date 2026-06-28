@@ -77,7 +77,25 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
+  }, []);
+
+  const toggleExpand = async (id: string) => {
+    const willOpen = !expanded[id];
+    setExpanded(e => ({ ...e, [id]: willOpen }));
+    if (willOpen && !logs[id]) {
+      const { data } = await supabase
+        .from('publication_logs')
+        .select('id, group_id, status, message, api_response, created_at')
+        .contains('api_response', { scheduled_id: id })
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setLogs(l => ({ ...l, [id]: data || [] }));
+    }
+  };
 
   const reset = () => {
     setTitle(''); setSelectedGroups([]); setMessageType('text'); setText('');
