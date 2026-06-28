@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdCategory, useApp, Ad } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,24 @@ export function AdForm({ category, onBack, ad }: Props) {
     ad ? formatPhone(ad.contact_phone) : (currentUser ? formatPhone(currentUser.phone) : '')
   );
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [cityOptions, setCityOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('ads')
+        .select('region')
+        .not('region', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (data) {
+        const uniq = Array.from(new Set(
+          data.map((r: any) => (r.region || '').trim()).filter(Boolean)
+        )).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        setCityOptions(uniq);
+      }
+    })();
+  }, []);
   // Existing remote photo URLs (edit mode). First item is the main photo.
   const [existingPhotos, setExistingPhotos] = useState<string[]>(
     ad ? [ad.main_photo, ...(ad.photos || [])] : []
@@ -362,7 +380,30 @@ export function AdForm({ category, onBack, ad }: Props) {
           onChange={e => setRegion(e.target.value)}
           placeholder="Ex: Coelho Neto - MA, Duque Bacelar - MA..."
           className="h-12 rounded-xl"
+          list="city-options"
+          autoComplete="off"
         />
+        <datalist id="city-options">
+          {cityOptions.map(c => <option key={c} value={c} />)}
+        </datalist>
+        {cityOptions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {cityOptions.slice(0, 8).map(c => (
+              <button
+                type="button"
+                key={c}
+                onClick={() => setRegion(c)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  region === c
+                    ? 'bg-accent text-accent-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/40'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Contact */}
