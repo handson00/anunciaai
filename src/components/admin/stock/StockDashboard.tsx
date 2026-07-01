@@ -27,7 +27,8 @@ export function StockDashboard() {
     { label: 'Vendas hoje', value: fmt(kpis.revenue_today), icon: DollarSign, color: 'bg-cta/10 text-cta' },
     { label: 'Vendas 7 dias', value: fmt(kpis.revenue_7d), icon: TrendingUp, color: 'bg-primary/10 text-primary' },
     { label: 'Vendas 30 dias', value: fmt(kpis.revenue_30d), icon: TrendingUp, color: 'bg-accent text-accent-foreground' },
-    { label: 'Lucro 30 dias', value: fmt(kpis.profit_30d), icon: DollarSign, color: 'bg-cta/10 text-cta' },
+    { label: 'Lucro recebido (30d)', value: fmt(kpis.profit_30d), icon: DollarSign, color: 'bg-cta/10 text-cta' },
+    { label: 'A receber (fiado)', value: fmt(kpis.receivable_total), icon: Clock, color: (kpis.receivable_total || 0) > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-muted text-muted-foreground' },
     { label: 'Itens vendidos (30d)', value: String(kpis.items_sold_30d), icon: Package, color: 'bg-secondary text-secondary-foreground' },
     { label: 'Estoque baixo', value: String(kpis.low_stock_count), icon: AlertTriangle, color: kpis.low_stock_count > 0 ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground' },
   ];
