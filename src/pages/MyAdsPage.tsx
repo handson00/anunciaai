@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { DesktopShell } from '@/components/DesktopShell';
 import { thumb } from '@/utils/image-url';
+import { supabase } from '@/integrations/supabase/client';
+import { AdScheduleDialog } from '@/components/AdScheduleDialog';
 
 const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '📦', property: '🏠', service: '🔧',
@@ -24,13 +26,19 @@ export default function MyAdsPage() {
   const navigate = useNavigate();
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
+  const [canSchedule, setCanSchedule] = useState(false);
+  const [scheduleAd, setScheduleAd] = useState<Ad | null>(null);
 
   useEffect(() => {
     getUserAds().then(data => {
       setAds(data);
       setLoading(false);
     });
-  }, []);
+    if (currentUser?.user_id) {
+      supabase.rpc('has_feature', { _user_id: currentUser.user_id, _key: 'ad_scheduling' })
+        .then(({ data }) => setCanSchedule(!!data));
+    }
+  }, [currentUser?.user_id]);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -160,6 +168,15 @@ export default function MyAdsPage() {
                     >
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
+                    {canSchedule && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setScheduleAd(ad); }}
+                        className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                        title="Agendar repostagem"
+                      >
+                        <Clock className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -185,6 +202,15 @@ export default function MyAdsPage() {
         )}
       </div>
     </div>
+    {scheduleAd && currentUser && (
+      <AdScheduleDialog
+        open={!!scheduleAd}
+        onOpenChange={(v) => { if (!v) setScheduleAd(null); }}
+        adId={scheduleAd.id}
+        adTitle={scheduleAd.title}
+        userId={currentUser.user_id}
+      />
+    )}
     </DesktopShell>
   );
 }

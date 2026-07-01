@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [userFeatures, setUserFeatures] = useState<Record<string, Record<string, boolean>>>({});
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupId, setNewGroupId] = useState('');
@@ -331,6 +332,23 @@ export default function AdminPage() {
     await supabase.from('profiles').update({ blocked: !blocked }).eq('user_id', userId);
     fetchUsers();
     toast.success(blocked ? 'Anunciante desbloqueado' : 'Anunciante bloqueado');
+  };
+
+  const loadUserFeatures = async (userId: string) => {
+    const { data } = await supabase.from('user_features').select('feature_key, enabled').eq('user_id', userId);
+    const map: Record<string, boolean> = {};
+    for (const r of data || []) map[r.feature_key] = r.enabled;
+    setUserFeatures(prev => ({ ...prev, [userId]: map }));
+  };
+
+  const toggleUserFeature = async (userId: string, key: string, enabled: boolean) => {
+    const { error } = await supabase.from('user_features').upsert(
+      { user_id: userId, feature_key: key, enabled },
+      { onConflict: 'user_id,feature_key' }
+    );
+    if (error) { toast.error(error.message); return; }
+    setUserFeatures(prev => ({ ...prev, [userId]: { ...(prev[userId] || {}), [key]: enabled } }));
+    toast.success(enabled ? 'Funcionalidade liberada' : 'Funcionalidade revogada');
   };
 
   const fetchWhatsappGroups = async () => {
@@ -622,7 +640,11 @@ export default function AdminPage() {
             ) : filteredUsers.map(user => (
               <div key={user.id} className="bg-card border rounded-xl overflow-hidden">
                 <button
-                  onClick={() => setExpandedUser(expandedUser === user.user_id ? null : user.user_id)}
+                  onClick={() => {
+                    const newExpanded = expandedUser === user.user_id ? null : user.user_id;
+                    setExpandedUser(newExpanded);
+                    if (newExpanded && !userFeatures[newExpanded]) loadUserFeatures(newExpanded);
+                  }}
                   className="w-full p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
                 >
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
@@ -674,6 +696,18 @@ export default function AdminPage() {
                       >
                         {user.blocked ? <><CheckCircle className="w-4 h-4" /> Desbloquear</> : <><Ban className="w-4 h-4" /> Bloquear</>}
                       </Button>
+                    </div>
+                    <div className="border rounded-lg p-3 bg-muted/30">
+                      <p className="text-xs font-semibold text-foreground mb-2">Funcionalidades liberadas</p>
+                      <label className="flex items-center justify-between gap-2 text-xs">
+                        <span className="flex items-center gap-1.5"><CalendarClock className="w-3.5 h-3.5" /> Agendamento de anúncios</span>
+                        <input
+                          type="checkbox"
+                          checked={!!userFeatures[user.user_id]?.ad_scheduling}
+                          onChange={(e) => toggleUserFeature(user.user_id, 'ad_scheduling', e.target.checked)}
+                          className="h-4 w-4 accent-primary"
+                        />
+                      </label>
                     </div>
                     {(() => {
                       const userAds = ads.filter(a => a.user_id === user.user_id);
