@@ -287,12 +287,27 @@ export function StockSales() {
                       {s.customer_name && ` · ${s.customer_name}`}
                       {s.customer_phone && ` · ${s.customer_phone}`}
                     </p>
-                    {s.due_date && !isPaid && (
-                      <p className={`text-[11px] font-medium flex items-center gap-1 ${new Date(s.due_date) <= new Date() ? 'text-destructive' : 'text-primary'}`}>
+                    {isInstallment && !isPaid && (
+                      <div className={`text-[11px] font-medium flex items-center gap-2 ${s.due_date && new Date(s.due_date) <= new Date() ? 'text-destructive' : 'text-primary'}`}>
                         <CalendarClock className="w-3 h-3" />
-                        Cobrança: {new Date(s.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                        {s.reminder_sent_at && ' · ✓ enviada'}
-                      </p>
+                        <span>Cobrança:</span>
+                        <input
+                          type="date"
+                          value={s.due_date || ''}
+                          onChange={async (e) => {
+                            const v = e.target.value || null;
+                            const { error } = await (supabase as any)
+                              .from('stock_sales')
+                              .update({ due_date: v, reminder_sent_at: null })
+                              .eq('id', s.id);
+                            if (error) return toast.error(error.message);
+                            toast.success('Data atualizada');
+                            load();
+                          }}
+                          className="h-6 border rounded px-1 text-[11px] bg-background"
+                        />
+                        {s.reminder_sent_at && <span className="text-muted-foreground">✓ enviada</span>}
+                      </div>
                     )}
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => remove(s.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
