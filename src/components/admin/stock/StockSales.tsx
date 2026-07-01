@@ -20,11 +20,20 @@ export function StockSales() {
   const [qty, setQty] = useState(1);
   const [price, setPrice] = useState(0);
   const [customer, setCustomer] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [note, setNote] = useState('');
   const [paymentType, setPaymentType] = useState<'cash' | 'installment'>('cash');
   const [installments, setInstallments] = useState(2);
   const [downPayment, setDownPayment] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  // Template de cobrança
+  const [tplOpen, setTplOpen] = useState(false);
+  const [tplLoading, setTplLoading] = useState(false);
+  const [template, setTemplate] = useState('');
+  const [tplSaving, setTplSaving] = useState(false);
+  const [sending, setSending] = useState(false);
 
   // Payments modal
   const [payOpen, setPayOpen] = useState(false);
