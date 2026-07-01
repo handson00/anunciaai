@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<AdCategory | ''>('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [userFeatures, setUserFeatures] = useState<Record<string, Record<string, boolean>>>({});
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupId, setNewGroupId] = useState('');
