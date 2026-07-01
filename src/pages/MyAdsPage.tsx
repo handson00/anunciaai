@@ -26,13 +26,19 @@ export default function MyAdsPage() {
   const navigate = useNavigate();
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
+  const [canSchedule, setCanSchedule] = useState(false);
+  const [scheduleAd, setScheduleAd] = useState<Ad | null>(null);
 
   useEffect(() => {
     getUserAds().then(data => {
       setAds(data);
       setLoading(false);
     });
-  }, []);
+    if (currentUser?.user_id) {
+      supabase.rpc('has_feature', { _user_id: currentUser.user_id, _key: 'ad_scheduling' })
+        .then(({ data }) => setCanSchedule(!!data));
+    }
+  }, [currentUser?.user_id]);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
