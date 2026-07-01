@@ -113,6 +113,8 @@ export function StockSales() {
       unit_price: price,
       unit_cost: Number(p.cost_price),
       customer_name: customer || null,
+      customer_phone: customerPhone || null,
+      due_date: dueDate || null,
       note: note || null,
       created_by: user?.id,
       payment_type: paymentType,
