@@ -334,6 +334,23 @@ export default function AdminPage() {
     toast.success(blocked ? 'Anunciante desbloqueado' : 'Anunciante bloqueado');
   };
 
+  const loadUserFeatures = async (userId: string) => {
+    const { data } = await supabase.from('user_features').select('feature_key, enabled').eq('user_id', userId);
+    const map: Record<string, boolean> = {};
+    for (const r of data || []) map[r.feature_key] = r.enabled;
+    setUserFeatures(prev => ({ ...prev, [userId]: map }));
+  };
+
+  const toggleUserFeature = async (userId: string, key: string, enabled: boolean) => {
+    const { error } = await supabase.from('user_features').upsert(
+      { user_id: userId, feature_key: key, enabled },
+      { onConflict: 'user_id,feature_key' }
+    );
+    if (error) { toast.error(error.message); return; }
+    setUserFeatures(prev => ({ ...prev, [userId]: { ...(prev[userId] || {}), [key]: enabled } }));
+    toast.success(enabled ? 'Funcionalidade liberada' : 'Funcionalidade revogada');
+  };
+
   const fetchWhatsappGroups = async () => {
     setLoadingWaGroups(true);
     try {
