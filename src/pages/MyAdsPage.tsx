@@ -168,6 +168,15 @@ export default function MyAdsPage() {
                     >
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
+                    {canSchedule && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setScheduleAd(ad); }}
+                        className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                        title="Agendar repostagem"
+                      >
+                        <Clock className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
