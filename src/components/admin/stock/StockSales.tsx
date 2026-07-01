@@ -336,13 +336,25 @@ export function StockSales() {
                 <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
               </div>
             </div>
-            <div>
-              <label className="text-xs font-medium">Cliente</label>
-              <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Opcional" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-medium">Cliente</label>
+                <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Nome" />
+              </div>
+              <div>
+                <label className="text-xs font-medium">WhatsApp do cliente</label>
+                <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Ex: 5598999999999" />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium">Observação</label>
-              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-medium flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de cobrança</label>
+                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Observação</label>
+                <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" />
+              </div>
             </div>
 
             <div className="border-t pt-3">
