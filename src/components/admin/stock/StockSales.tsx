@@ -471,6 +471,32 @@ export function StockSales() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Mensagem de cobrança */}
+      <Dialog open={tplOpen} onOpenChange={setTplOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Mensagem de cobrança</DialogTitle></DialogHeader>
+          {tplLoading ? (
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Use as variáveis: <code className="bg-secondary px-1 rounded">{'{nome}'}</code>{' '}
+                <code className="bg-secondary px-1 rounded">{'{produto}'}</code>{' '}
+                <code className="bg-secondary px-1 rounded">{'{valor}'}</code>
+              </p>
+              <Textarea rows={6} value={template} onChange={(e) => setTemplate(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground">
+                A mensagem é enviada automaticamente todo dia às 09h para vendas fiado cuja data de cobrança já chegou.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTplOpen(false)}>Cancelar</Button>
+            <Button variant="cta" onClick={saveTemplate} disabled={tplSaving}><Save className="w-4 h-4" /> Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
