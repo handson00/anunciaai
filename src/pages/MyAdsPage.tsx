@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { DesktopShell } from '@/components/DesktopShell';
 import { thumb } from '@/utils/image-url';
+import { supabase } from '@/integrations/supabase/client';
+import { AdScheduleDialog } from '@/components/AdScheduleDialog';
 
 const categoryEmoji: Record<string, string> = {
   automobile: '🚗', product: '📦', property: '🏠', service: '🔧',
