@@ -4,7 +4,8 @@ import { listProducts, listSales, listSalePayments, StockProduct, StockSale, Sal
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Save, Wallet, CreditCard } from 'lucide-react';
+import { Plus, Trash2, Save, Wallet, CreditCard, MessageSquare, Send, CalendarClock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 const fmt = (v: number) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -20,11 +21,20 @@ export function StockSales() {
   const [qty, setQty] = useState(1);
   const [price, setPrice] = useState(0);
   const [customer, setCustomer] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [note, setNote] = useState('');
   const [paymentType, setPaymentType] = useState<'cash' | 'installment'>('cash');
   const [installments, setInstallments] = useState(2);
   const [downPayment, setDownPayment] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  // Template de cobrança
+  const [tplOpen, setTplOpen] = useState(false);
+  const [tplLoading, setTplLoading] = useState(false);
+  const [template, setTemplate] = useState('');
+  const [tplSaving, setTplSaving] = useState(false);
+  const [sending, setSending] = useState(false);
 
   // Payments modal
   const [payOpen, setPayOpen] = useState(false);
@@ -48,9 +58,38 @@ export function StockSales() {
   useEffect(() => { load(); }, []);
 
   const openNew = () => {
-    setProductId(''); setQty(1); setPrice(0); setCustomer(''); setNote('');
+    setProductId(''); setQty(1); setPrice(0); setCustomer(''); setCustomerPhone(''); setDueDate(''); setNote('');
     setPaymentType('cash'); setInstallments(2); setDownPayment(0);
     setOpen(true);
+  };
+
+  const openTemplate = async () => {
+    setTplOpen(true);
+    setTplLoading(true);
+    const { data } = await (supabase as any)
+      .from('app_settings').select('value').eq('key', 'billing_reminder_template').maybeSingle();
+    setTemplate(data?.value || 'Olá {nome}! Passando para lembrar do pagamento de *{produto}* no valor de *R$ {valor}*. Qualquer dúvida estou à disposição.');
+    setTplLoading(false);
+  };
+
+  const saveTemplate = async () => {
+    setTplSaving(true);
+    const { error } = await (supabase as any)
+      .from('app_settings')
+      .upsert({ key: 'billing_reminder_template', value: template }, { onConflict: 'key' });
+    setTplSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success('Mensagem salva');
+    setTplOpen(false);
+  };
+
+  const runNow = async () => {
+    setSending(true);
+    const { data, error } = await supabase.functions.invoke('enviar-cobranca-fiado');
+    setSending(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Cobranças processadas: ${(data as any)?.processed ?? 0}`);
+    load();
   };
 
   const onProductChange = (id: string) => {
@@ -75,6 +114,8 @@ export function StockSales() {
       unit_price: price,
       unit_cost: Number(p.cost_price),
       customer_name: customer || null,
+      customer_phone: customerPhone || null,
+      due_date: dueDate || null,
       note: note || null,
       created_by: user?.id,
       payment_type: paymentType,
@@ -184,6 +225,8 @@ export function StockSales() {
           </select>
         </div>
         <div className="flex-1" />
+        <Button variant="outline" onClick={openTemplate}><MessageSquare className="w-4 h-4" /> Msg. cobrança</Button>
+        <Button variant="outline" onClick={runNow} disabled={sending}><Send className="w-4 h-4" /> {sending ? 'Enviando...' : 'Enviar cobranças'}</Button>
         <Button variant="cta" onClick={openNew}><Plus className="w-4 h-4" /> Registrar venda</Button>
       </div>
 
@@ -242,7 +285,15 @@ export function StockSales() {
                     <p className="text-[11px] text-muted-foreground">
                       {new Date(s.sold_at).toLocaleString('pt-BR')}
                       {s.customer_name && ` · ${s.customer_name}`}
+                      {s.customer_phone && ` · ${s.customer_phone}`}
                     </p>
+                    {s.due_date && !isPaid && (
+                      <p className={`text-[11px] font-medium flex items-center gap-1 ${new Date(s.due_date) <= new Date() ? 'text-destructive' : 'text-primary'}`}>
+                        <CalendarClock className="w-3 h-3" />
+                        Cobrança: {new Date(s.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        {s.reminder_sent_at && ' · ✓ enviada'}
+                      </p>
+                    )}
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => remove(s.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
@@ -293,13 +344,25 @@ export function StockSales() {
                 <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
               </div>
             </div>
-            <div>
-              <label className="text-xs font-medium">Cliente</label>
-              <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Opcional" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-medium">Cliente</label>
+                <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Nome" />
+              </div>
+              <div>
+                <label className="text-xs font-medium">WhatsApp do cliente</label>
+                <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Ex: 5598999999999" />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium">Observação</label>
-              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-medium flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de cobrança</label>
+                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Observação</label>
+                <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" />
+              </div>
             </div>
 
             <div className="border-t pt-3">
@@ -414,6 +477,32 @@ export function StockSales() {
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mensagem de cobrança */}
+      <Dialog open={tplOpen} onOpenChange={setTplOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Mensagem de cobrança</DialogTitle></DialogHeader>
+          {tplLoading ? (
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Use as variáveis: <code className="bg-secondary px-1 rounded">{'{nome}'}</code>{' '}
+                <code className="bg-secondary px-1 rounded">{'{produto}'}</code>{' '}
+                <code className="bg-secondary px-1 rounded">{'{valor}'}</code>
+              </p>
+              <Textarea rows={6} value={template} onChange={(e) => setTemplate(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground">
+                A mensagem é enviada automaticamente todo dia às 09h para vendas fiado cuja data de cobrança já chegou.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTplOpen(false)}>Cancelar</Button>
+            <Button variant="cta" onClick={saveTemplate} disabled={tplSaving}><Save className="w-4 h-4" /> Salvar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -30,6 +30,9 @@ export interface StockSale {
   payment_type: 'cash' | 'installment';
   installments_total: number;
   amount_paid: number;
+  due_date: string | null;
+  customer_phone: string | null;
+  reminder_sent_at: string | null;
   // joined
   product_name?: string;
 }

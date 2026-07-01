@@ -632,6 +632,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_name: string | null
+          customer_phone: string | null
+          due_date: string | null
           id: string
           installments_total: number
           note: string | null
@@ -639,6 +641,7 @@ export type Database = {
           product_id: string
           profit: number | null
           quantity: number
+          reminder_sent_at: string | null
           sold_at: string
           total: number | null
           unit_cost: number
@@ -649,6 +652,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_name?: string | null
+          customer_phone?: string | null
+          due_date?: string | null
           id?: string
           installments_total?: number
           note?: string | null
@@ -656,6 +661,7 @@ export type Database = {
           product_id: string
           profit?: number | null
           quantity: number
+          reminder_sent_at?: string | null
           sold_at?: string
           total?: number | null
           unit_cost?: number
@@ -666,6 +672,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_name?: string | null
+          customer_phone?: string | null
+          due_date?: string | null
           id?: string
           installments_total?: number
           note?: string | null
@@ -673,6 +681,7 @@ export type Database = {
           product_id?: string
           profit?: number | null
           quantity?: number
+          reminder_sent_at?: string | null
           sold_at?: string
           total?: number | null
           unit_cost?: number
