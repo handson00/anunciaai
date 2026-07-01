@@ -57,9 +57,38 @@ export function StockSales() {
   useEffect(() => { load(); }, []);
 
   const openNew = () => {
-    setProductId(''); setQty(1); setPrice(0); setCustomer(''); setNote('');
+    setProductId(''); setQty(1); setPrice(0); setCustomer(''); setCustomerPhone(''); setDueDate(''); setNote('');
     setPaymentType('cash'); setInstallments(2); setDownPayment(0);
     setOpen(true);
+  };
+
+  const openTemplate = async () => {
+    setTplOpen(true);
+    setTplLoading(true);
+    const { data } = await (supabase as any)
+      .from('app_settings').select('value').eq('key', 'billing_reminder_template').maybeSingle();
+    setTemplate(data?.value || 'Olá {nome}! Passando para lembrar do pagamento de *{produto}* no valor de *R$ {valor}*. Qualquer dúvida estou à disposição.');
+    setTplLoading(false);
+  };
+
+  const saveTemplate = async () => {
+    setTplSaving(true);
+    const { error } = await (supabase as any)
+      .from('app_settings')
+      .upsert({ key: 'billing_reminder_template', value: template }, { onConflict: 'key' });
+    setTplSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success('Mensagem salva');
+    setTplOpen(false);
+  };
+
+  const runNow = async () => {
+    setSending(true);
+    const { data, error } = await supabase.functions.invoke('enviar-cobranca-fiado');
+    setSending(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Cobranças processadas: ${(data as any)?.processed ?? 0}`);
+    load();
   };
 
   const onProductChange = (id: string) => {
