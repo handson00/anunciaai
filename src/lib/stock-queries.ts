@@ -60,6 +60,8 @@ export interface DashboardKpis {
   profit_7d: number;
   profit_30d: number;
   items_sold_30d: number;
+  receivable_total: number;
+  receivable_30d: number;
   low_stock_count: number;
   series_30d: { day: string; revenue: number; profit: number }[];
   top_products_30d: { product_id: string; name: string; qty: number; revenue: number }[];
