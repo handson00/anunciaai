@@ -225,6 +225,8 @@ export function StockSales() {
           </select>
         </div>
         <div className="flex-1" />
+        <Button variant="outline" onClick={openTemplate}><MessageSquare className="w-4 h-4" /> Msg. cobrança</Button>
+        <Button variant="outline" onClick={runNow} disabled={sending}><Send className="w-4 h-4" /> {sending ? 'Enviando...' : 'Enviar cobranças'}</Button>
         <Button variant="cta" onClick={openNew}><Plus className="w-4 h-4" /> Registrar venda</Button>
       </div>
 
