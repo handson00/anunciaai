@@ -285,7 +285,15 @@ export function StockSales() {
                     <p className="text-[11px] text-muted-foreground">
                       {new Date(s.sold_at).toLocaleString('pt-BR')}
                       {s.customer_name && ` · ${s.customer_name}`}
+                      {s.customer_phone && ` · ${s.customer_phone}`}
                     </p>
+                    {s.due_date && !isPaid && (
+                      <p className={`text-[11px] font-medium flex items-center gap-1 ${new Date(s.due_date) <= new Date() ? 'text-destructive' : 'text-primary'}`}>
+                        <CalendarClock className="w-3 h-3" />
+                        Cobrança: {new Date(s.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        {s.reminder_sent_at && ' · ✓ enviada'}
+                      </p>
+                    )}
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => remove(s.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
