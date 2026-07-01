@@ -640,7 +640,11 @@ export default function AdminPage() {
             ) : filteredUsers.map(user => (
               <div key={user.id} className="bg-card border rounded-xl overflow-hidden">
                 <button
-                  onClick={() => setExpandedUser(expandedUser === user.user_id ? null : user.user_id)}
+                  onClick={() => {
+                    const newExpanded = expandedUser === user.user_id ? null : user.user_id;
+                    setExpandedUser(newExpanded);
+                    if (newExpanded && !userFeatures[newExpanded]) loadUserFeatures(newExpanded);
+                  }}
                   className="w-full p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
                 >
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
