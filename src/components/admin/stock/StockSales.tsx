@@ -4,7 +4,8 @@ import { listProducts, listSales, listSalePayments, StockProduct, StockSale, Sal
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Save, Wallet, CreditCard } from 'lucide-react';
+import { Plus, Trash2, Save, Wallet, CreditCard, MessageSquare, Send, CalendarClock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 const fmt = (v: number) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
