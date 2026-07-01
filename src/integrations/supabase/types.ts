@@ -14,6 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_schedule_runs: {
+        Row: {
+          detail: string | null
+          id: string
+          ran_at: string
+          run_date: string
+          schedule_id: string
+          slot: string
+          status: string
+        }
+        Insert: {
+          detail?: string | null
+          id?: string
+          ran_at?: string
+          run_date: string
+          schedule_id: string
+          slot: string
+          status?: string
+        }
+        Update: {
+          detail?: string | null
+          id?: string
+          ran_at?: string
+          run_date?: string
+          schedule_id?: string
+          slot?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_schedule_runs_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "ad_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_schedules: {
+        Row: {
+          active: boolean
+          ad_id: string
+          created_at: string
+          id: string
+          last_run_at: string | null
+          times: string[]
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          ad_id: string
+          created_at?: string
+          id?: string
+          last_run_at?: string | null
+          times?: string[]
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          ad_id?: string
+          created_at?: string
+          id?: string
+          last_run_at?: string | null
+          times?: string[]
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_schedules_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: true
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
           brand: string | null
@@ -697,6 +779,30 @@ export type Database = {
           },
         ]
       }
+      user_features: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          feature_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          feature_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          feature_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -754,6 +860,10 @@ export type Database = {
           store_slug: string
           user_id: string
         }[]
+      }
+      has_feature: {
+        Args: { _key: string; _user_id: string }
+        Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       list_admin_users: {
