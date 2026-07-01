@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchKpis, DashboardKpis } from '@/lib/stock-queries';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, DollarSign, Package, AlertTriangle, RefreshCw } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, AlertTriangle, RefreshCw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const fmt = (v: number) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
