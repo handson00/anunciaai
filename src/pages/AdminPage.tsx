@@ -697,6 +697,18 @@ export default function AdminPage() {
                         {user.blocked ? <><CheckCircle className="w-4 h-4" /> Desbloquear</> : <><Ban className="w-4 h-4" /> Bloquear</>}
                       </Button>
                     </div>
+                    <div className="border rounded-lg p-3 bg-muted/30">
+                      <p className="text-xs font-semibold text-foreground mb-2">Funcionalidades liberadas</p>
+                      <label className="flex items-center justify-between gap-2 text-xs">
+                        <span className="flex items-center gap-1.5"><CalendarClock className="w-3.5 h-3.5" /> Agendamento de anúncios</span>
+                        <input
+                          type="checkbox"
+                          checked={!!userFeatures[user.user_id]?.ad_scheduling}
+                          onChange={(e) => toggleUserFeature(user.user_id, 'ad_scheduling', e.target.checked)}
+                          className="h-4 w-4 accent-primary"
+                        />
+                      </label>
+                    </div>
                     {(() => {
                       const userAds = ads.filter(a => a.user_id === user.user_id);
                       if (userAds.length === 0) return <p className="text-xs text-muted-foreground text-center py-2">Nenhum anúncio</p>;
