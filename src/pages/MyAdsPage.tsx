@@ -202,6 +202,15 @@ export default function MyAdsPage() {
         )}
       </div>
     </div>
+    {scheduleAd && currentUser && (
+      <AdScheduleDialog
+        open={!!scheduleAd}
+        onOpenChange={(v) => { if (!v) setScheduleAd(null); }}
+        adId={scheduleAd.id}
+        adTitle={scheduleAd.title}
+        userId={currentUser.user_id}
+      />
+    )}
     </DesktopShell>
   );
 }
