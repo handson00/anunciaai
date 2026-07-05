@@ -190,6 +190,7 @@ export function AdForm({ category, onBack, ad }: Props) {
           title: title.trim(),
           description: description.trim(),
           price: priceNum,
+          price_on_request: priceOnRequest,
           condition: condition || undefined,
           brand: brand.trim() || undefined,
           region: region.trim() || undefined,
