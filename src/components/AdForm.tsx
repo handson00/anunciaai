@@ -153,7 +153,7 @@ export function AdForm({ category, onBack, ad }: Props) {
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
-    if (!price.trim()) { toast.error('Digite o valor'); return; }
+    if (!priceOnRequest && !price.trim()) { toast.error('Digite o valor'); return; }
     const totalPhotos = existingPhotos.length + photoPreviews.length;
     if (totalPhotos === 0) { toast.error('Adicione pelo menos uma foto'); return; }
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
