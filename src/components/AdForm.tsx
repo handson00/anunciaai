@@ -159,7 +159,7 @@ export function AdForm({ category, onBack, ad }: Props) {
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
     if (showCondition && !condition) { toast.error('Selecione a condição'); return; }
 
-    const priceNum = parseFloat(price.replace(/\D/g, '')) / 100;
+    const priceNum = priceOnRequest ? 0 : parseFloat(price.replace(/\D/g, '')) / 100;
 
     setSubmitting(true);
     try {
