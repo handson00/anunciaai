@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       '',
       `🏪 ${advertiserName}`,
       `📦 ${ad.title}`,
-      `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      ad.price_on_request ? `💰 Consultar com vendedor` : `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ];
     if (ad.region) lines.push(`📍 ${ad.region}`);
     if (ad.brand) lines.push(`🏷️ Marca: ${ad.brand}`);
