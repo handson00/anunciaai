@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       '',
       `🏪 ${advertiserName}`,
       `📦 ${ad.title}`,
-      `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      ad.price_on_request ? `💰 Consultar com vendedor` : `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ];
     if (ad.region) lines.push(`📍 ${ad.region}`);
     if (ad.brand) lines.push(`🏷️ Marca: ${ad.brand}`);
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
           `${emoji} *${catLabels[ad.category] || 'ANÚNCIO'}*`,
           '',
           `📦 ${ad.title}`,
-          `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+          ad.price_on_request ? `💰 Consultar com vendedor` : `💰 R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           ad.region ? `📍 ${ad.region}` : '',
           '',
           `📝 ${ad.description.substring(0, 200)}${ad.description.length > 200 ? '...' : ''}`,
@@ -256,6 +256,7 @@ Deno.serve(async (req) => {
               title: ad.title,
               description: ad.description,
               price: ad.price,
+              price_on_request: ad.price_on_request,
               category: ad.category,
               condition: ad.condition,
               brand: ad.brand,

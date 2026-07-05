@@ -28,6 +28,7 @@ export interface Ad {
   title: string;
   description: string;
   price: number;
+  price_on_request?: boolean | null;
   condition?: AdCondition | null;
   brand?: string | null;
   region?: string | null;
@@ -183,6 +184,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         title: adData.title,
         description: adData.description,
         price: adData.price,
+        price_on_request: adData.price_on_request ?? false,
         condition: adData.condition || null,
         brand: adData.brand || null,
         region: adData.region || null,

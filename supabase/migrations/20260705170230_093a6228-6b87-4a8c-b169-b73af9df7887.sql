@@ -1,0 +1,1 @@
+ALTER TABLE public.ads ADD COLUMN IF NOT EXISTS price_on_request boolean NOT NULL DEFAULT false;

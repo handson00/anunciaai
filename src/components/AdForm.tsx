@@ -43,7 +43,8 @@ export function AdForm({ category, onBack, ad }: Props) {
 
   const [title, setTitle] = useState(ad?.title || '');
   const [description, setDescription] = useState(ad?.description || '');
-  const [price, setPrice] = useState(ad ? formatPriceFromNumber(Number(ad.price)) : '');
+  const [price, setPrice] = useState(ad && !ad.price_on_request ? formatPriceFromNumber(Number(ad.price)) : '');
+  const [priceOnRequest, setPriceOnRequest] = useState<boolean>(!!ad?.price_on_request);
   const [condition, setCondition] = useState<'new' | 'used' | ''>(ad?.condition || '');
   const [brand, setBrand] = useState(ad?.brand || '');
   const [region, setRegion] = useState(ad?.region || '');
@@ -152,13 +153,13 @@ export function AdForm({ category, onBack, ad }: Props) {
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error('Digite o nome do anúncio'); return; }
     if (!description.trim()) { toast.error('Digite uma descrição'); return; }
-    if (!price.trim()) { toast.error('Digite o valor'); return; }
+    if (!priceOnRequest && !price.trim()) { toast.error('Digite o valor'); return; }
     const totalPhotos = existingPhotos.length + photoPreviews.length;
     if (totalPhotos === 0) { toast.error('Adicione pelo menos uma foto'); return; }
     if (!contactPhone.trim()) { toast.error('Digite o telefone de contato'); return; }
     if (showCondition && !condition) { toast.error('Selecione a condição'); return; }
 
-    const priceNum = parseFloat(price.replace(/\D/g, '')) / 100;
+    const priceNum = priceOnRequest ? 0 : parseFloat(price.replace(/\D/g, '')) / 100;
 
     setSubmitting(true);
     try {
@@ -172,6 +173,7 @@ export function AdForm({ category, onBack, ad }: Props) {
           title: title.trim(),
           description: description.trim(),
           price: priceNum,
+          price_on_request: priceOnRequest,
           condition: condition || null,
           brand: brand.trim() || null,
           region: region.trim() || null,
@@ -188,6 +190,7 @@ export function AdForm({ category, onBack, ad }: Props) {
           title: title.trim(),
           description: description.trim(),
           price: priceNum,
+          price_on_request: priceOnRequest,
           condition: condition || undefined,
           brand: brand.trim() || undefined,
           region: region.trim() || undefined,
@@ -363,12 +366,23 @@ export function AdForm({ category, onBack, ad }: Props) {
         </label>
         <Input
           type="tel"
-          value={price}
+          value={priceOnRequest ? '' : price}
           onChange={e => setPrice(formatPrice(e.target.value))}
-          placeholder="R$ 0,00"
-          className="h-12 rounded-xl text-lg font-bold"
+          placeholder={priceOnRequest ? 'Consultar com vendedor' : 'R$ 0,00'}
+          disabled={priceOnRequest}
+          className="h-12 rounded-xl text-lg font-bold disabled:opacity-70"
         />
+        <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={priceOnRequest}
+            onChange={e => setPriceOnRequest(e.target.checked)}
+            className="w-4 h-4 accent-primary"
+          />
+          <span className="text-sm text-foreground">Consultar com vendedor</span>
+        </label>
       </div>
+
 
       {/* Region */}
       <div>

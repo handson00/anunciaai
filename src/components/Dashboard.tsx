@@ -201,7 +201,7 @@ export function Dashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground text-sm truncate">{ad.title}</p>
                       <p className="text-cta font-bold text-sm">
-                        R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                       </p>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${st.class}`}>

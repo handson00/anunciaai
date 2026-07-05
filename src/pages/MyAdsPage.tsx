@@ -151,7 +151,7 @@ export default function MyAdsPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground text-sm truncate">{ad.title}</p>
                     <p className="text-cta font-bold text-sm">
-                      R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${st.class}`}>{st.label}</span>
