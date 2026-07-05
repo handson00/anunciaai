@@ -43,7 +43,8 @@ export function AdForm({ category, onBack, ad }: Props) {
 
   const [title, setTitle] = useState(ad?.title || '');
   const [description, setDescription] = useState(ad?.description || '');
-  const [price, setPrice] = useState(ad ? formatPriceFromNumber(Number(ad.price)) : '');
+  const [price, setPrice] = useState(ad && !ad.price_on_request ? formatPriceFromNumber(Number(ad.price)) : '');
+  const [priceOnRequest, setPriceOnRequest] = useState<boolean>(!!ad?.price_on_request);
   const [condition, setCondition] = useState<'new' | 'used' | ''>(ad?.condition || '');
   const [brand, setBrand] = useState(ad?.brand || '');
   const [region, setRegion] = useState(ad?.region || '');
