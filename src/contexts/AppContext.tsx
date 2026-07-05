@@ -184,6 +184,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         title: adData.title,
         description: adData.description,
         price: adData.price,
+        price_on_request: adData.price_on_request ?? false,
         condition: adData.condition || null,
         brand: adData.brand || null,
         region: adData.region || null,
