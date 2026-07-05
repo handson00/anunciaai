@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2, Pencil, CheckCircle2, Share2, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil, PackageCheck, Share2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { DesktopShell } from '@/components/DesktopShell';
@@ -166,7 +166,7 @@ export default function MyAdsPage() {
                       className={`p-2 transition-colors ${ad.status === 'sold' ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'}`}
                       title={ad.status === 'sold' ? "Marcar como disponível" : "Marcar como vendido"}
                     >
-                      <CheckCircle2 className="w-4 h-4" />
+                      <PackageCheck className="w-4 h-4" />
                     </button>
                     {canSchedule && (
                       <button
