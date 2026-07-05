@@ -256,6 +256,7 @@ Deno.serve(async (req) => {
               title: ad.title,
               description: ad.description,
               price: ad.price,
+              price_on_request: ad.price_on_request,
               category: ad.category,
               condition: ad.condition,
               brand: ad.brand,
