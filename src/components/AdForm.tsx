@@ -366,12 +366,23 @@ export function AdForm({ category, onBack, ad }: Props) {
         </label>
         <Input
           type="tel"
-          value={price}
+          value={priceOnRequest ? '' : price}
           onChange={e => setPrice(formatPrice(e.target.value))}
-          placeholder="R$ 0,00"
-          className="h-12 rounded-xl text-lg font-bold"
+          placeholder={priceOnRequest ? 'Consultar com vendedor' : 'R$ 0,00'}
+          disabled={priceOnRequest}
+          className="h-12 rounded-xl text-lg font-bold disabled:opacity-70"
         />
+        <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={priceOnRequest}
+            onChange={e => setPriceOnRequest(e.target.checked)}
+            className="w-4 h-4 accent-primary"
+          />
+          <span className="text-sm text-foreground">Consultar com vendedor</span>
+        </label>
       </div>
+
 
       {/* Region */}
       <div>
