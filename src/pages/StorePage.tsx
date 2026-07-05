@@ -181,8 +181,8 @@ export default function StorePage() {
                 </div>
                 <div className="p-3 space-y-1">
                   <p className="font-semibold text-foreground text-sm line-clamp-2 leading-tight">{ad.title}</p>
-                  <p className="text-cta font-bold text-base">
-                    R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <p className={`text-cta font-bold ${ad.price_on_request ? 'text-sm' : 'text-base'}`}>
+                    {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                   </p>
                   {ad.region && <p className="text-xs text-muted-foreground">📍 {ad.region}</p>}
                 </div>
