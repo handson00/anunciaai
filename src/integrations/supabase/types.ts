@@ -109,6 +109,7 @@ export type Database = {
           main_photo: string
           photos: string[] | null
           price: number
+          price_on_request: boolean
           region: string | null
           search_vector: unknown
           slug: string
@@ -129,6 +130,7 @@ export type Database = {
           main_photo: string
           photos?: string[] | null
           price: number
+          price_on_request?: boolean
           region?: string | null
           search_vector?: unknown
           slug: string
@@ -149,6 +151,7 @@ export type Database = {
           main_photo?: string
           photos?: string[] | null
           price?: number
+          price_on_request?: boolean
           region?: string | null
           search_vector?: unknown
           slug?: string
