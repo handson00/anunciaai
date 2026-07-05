@@ -28,6 +28,7 @@ export interface Ad {
   title: string;
   description: string;
   price: number;
+  price_on_request?: boolean | null;
   condition?: AdCondition | null;
   brand?: string | null;
   region?: string | null;
