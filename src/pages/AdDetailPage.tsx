@@ -193,8 +193,8 @@ export default function AdDetailPage() {
 
           <h1 className="text-2xl font-bold text-foreground leading-tight">{ad.title}</h1>
 
-          <p className="text-2xl font-bold text-cta">
-            R$ {Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          <p className={`font-bold text-cta ${ad.price_on_request ? 'text-xl' : 'text-2xl'}`}>
+            {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           </p>
 
           <div className="flex flex-wrap gap-2">
