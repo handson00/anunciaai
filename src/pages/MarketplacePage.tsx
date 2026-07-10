@@ -4,10 +4,11 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Megaphone, Users, Loader2 } from 'lucide-react';
+import { Search, Megaphone, Users, Loader2, Lock } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { thumb } from '@/utils/image-url';
+import { useApp } from '@/contexts/AppContext';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
 const ADS_PER_PAGE = 12;
@@ -67,6 +68,7 @@ async function fetchPublishedAds({ pageParam = 0, category = 'all', searchTerm =
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const { currentUser } = useApp();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AdCategory | 'all'>('all');
@@ -133,7 +135,13 @@ export default function MarketplacePage() {
 
   const filtered = useMemo(() => ads, [ads]);
 
-  const goToAd = useCallback((slug: string) => navigate(`/ad/${slug}`), [navigate]);
+  const goToAd = useCallback((slug: string) => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/ad/${slug}`);
+  }, [navigate, currentUser]);
 
   return (
     <div className="min-h-screen bg-background">
