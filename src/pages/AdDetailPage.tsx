@@ -202,7 +202,7 @@ export default function AdDetailPage() {
               onClick={() => navigate('/login')}
               className="w-full flex items-center justify-center gap-2 bg-cta/10 border-2 border-dashed border-cta/40 text-cta font-bold rounded-xl px-4 py-4 hover:bg-cta/20 transition-colors"
             >
-              <Lock className="w-5 h-5" /> Cadastre-se para ver o valor
+              <Lock className="w-5 h-5" /> Cadastre-se para ver contato e preço
             </button>
           )}
 
@@ -255,7 +255,7 @@ export default function AdDetailPage() {
               className="flex-1 animate-[pulse-cta_2s_ease-in-out_infinite]"
               onClick={() => navigate('/login')}
             >
-              <Lock className="w-5 h-5" /> Cadastre-se para ver o contato
+              <Lock className="w-5 h-5" /> Cadastre-se para ver contato e preço
             </Button>
           ) : (
             <>

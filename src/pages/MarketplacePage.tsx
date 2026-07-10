@@ -263,7 +263,7 @@ export default function MarketplacePage() {
                       </p>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-cta font-bold text-xs bg-cta/10 border border-cta/20 rounded-md px-2 py-1">
-                        <Lock className="w-3 h-3" /> Cadastre-se para ver
+                        <Lock className="w-3 h-3" /> Cadastre-se para ver contato e preço
                       </span>
                     )}
                     {ad.user_name && (
