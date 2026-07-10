@@ -34,6 +34,12 @@ function slotToMinutes(slot: string): number | null {
 async function enqueueAd(supabase: any, scheduleUserId: string, adId: string, settingsMap: Record<string, string>) {
   const { data: ad } = await supabase.from('ads').select('*').eq('id', adId).single();
   if (!ad) throw new Error('Anúncio não encontrado');
+  if (ad.status === 'sold' || ad.is_sold === true) {
+    // Auto-deactivate schedule for sold ads so it stops trying.
+    await supabase.from('ad_schedules').update({ active: false }).eq('ad_id', adId);
+    throw new Error('Anúncio vendido - agendamento desativado');
+  }
+  if (ad.status === 'draft') throw new Error('Anúncio em rascunho');
 
   const { data: profile } = await supabase.from('profiles').select('name, store_name').eq('user_id', ad.user_id).single();
   const advertiserName = profile?.store_name?.trim() || profile?.name || 'Anunciante';
