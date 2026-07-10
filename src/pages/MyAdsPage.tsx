@@ -53,16 +53,22 @@ export default function MyAdsPage() {
     e.stopPropagation();
     const newStatus = isSold ? 'published' : 'sold';
     const message = isSold ? 'Anúncio reativado' : 'Anúncio marcado como vendido';
-    
-    await updateAd(id, { 
+
+    await updateAd(id, {
       status: newStatus as any,
-      is_sold: !isSold 
+      is_sold: !isSold
     });
-    
-    setAds(prev => prev.map(ad => 
+
+    // When marking as sold, deactivate any active repost schedule so it
+    // doesn't get re-published automatically.
+    if (!isSold) {
+      await supabase.from('ad_schedules').update({ active: false }).eq('ad_id', id);
+    }
+
+    setAds(prev => prev.map(ad =>
       ad.id === id ? { ...ad, status: newStatus as any, is_sold: !isSold } : ad
     ));
-    
+
     toast.success(message);
   };
 
