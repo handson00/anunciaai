@@ -4,10 +4,11 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Megaphone, Users, Loader2 } from 'lucide-react';
+import { Search, Megaphone, Users, Loader2, Lock } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { thumb } from '@/utils/image-url';
+import { useApp } from '@/contexts/AppContext';
 import type { Ad, AdCategory } from '@/contexts/AppContext';
 
 const ADS_PER_PAGE = 12;
@@ -67,6 +68,7 @@ async function fetchPublishedAds({ pageParam = 0, category = 'all', searchTerm =
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const { currentUser } = useApp();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AdCategory | 'all'>('all');
@@ -133,7 +135,13 @@ export default function MarketplacePage() {
 
   const filtered = useMemo(() => ads, [ads]);
 
-  const goToAd = useCallback((slug: string) => navigate(`/ad/${slug}`), [navigate]);
+  const goToAd = useCallback((slug: string) => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/ad/${slug}`);
+  }, [navigate, currentUser]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -249,9 +257,15 @@ export default function MarketplacePage() {
                     <p className="font-semibold text-foreground text-sm line-clamp-2 leading-tight">
                       {ad.title}
                     </p>
-                    <p className={`text-cta font-bold ${ad.price_on_request ? 'text-sm' : 'text-base'}`}>
-                      {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                    </p>
+                    {currentUser ? (
+                      <p className={`text-cta font-bold ${ad.price_on_request ? 'text-sm' : 'text-base'}`}>
+                        {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                      </p>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-cta font-bold text-xs bg-cta/10 border border-cta/20 rounded-md px-2 py-1">
+                        <Lock className="w-3 h-3" /> Cadastre-se para ver
+                      </span>
+                    )}
                     {ad.user_name && (
                       <p className="text-xs text-muted-foreground truncate">👤 {ad.user_name}</p>
                     )}

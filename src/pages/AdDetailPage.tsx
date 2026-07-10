@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Phone, Share2, Copy, Check, Send, Loader2, Pencil, X, Lock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -193,9 +193,18 @@ export default function AdDetailPage() {
 
           <h1 className="text-2xl font-bold text-foreground leading-tight">{ad.title}</h1>
 
-          <p className={`font-bold text-cta ${ad.price_on_request ? 'text-xl' : 'text-2xl'}`}>
-            {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          </p>
+          {currentUser ? (
+            <p className={`font-bold text-cta ${ad.price_on_request ? 'text-xl' : 'text-2xl'}`}>
+              {ad.price_on_request ? 'Consultar com vendedor' : `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            </p>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full flex items-center justify-center gap-2 bg-cta/10 border-2 border-dashed border-cta/40 text-cta font-bold rounded-xl px-4 py-4 hover:bg-cta/20 transition-colors"
+            >
+              <Lock className="w-5 h-5" /> Cadastre-se para ver o valor
+            </button>
+          )}
 
           <div className="flex flex-wrap gap-2">
             {ad.brand && (
@@ -239,6 +248,15 @@ export default function AdDetailPage() {
                 Este item já foi vendido
               </p>
             </div>
+          ) : !currentUser ? (
+            <Button
+              variant="cta"
+              size="lg"
+              className="flex-1 animate-[pulse-cta_2s_ease-in-out_infinite]"
+              onClick={() => navigate('/login')}
+            >
+              <Lock className="w-5 h-5" /> Cadastre-se para ver o contato
+            </Button>
           ) : (
             <>
               {canPublish && (
