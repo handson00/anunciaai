@@ -255,7 +255,7 @@ export default function AdDetailPage() {
               className="flex-1 animate-[pulse-cta_2s_ease-in-out_infinite]"
               onClick={() => navigate('/login')}
             >
-              <Lock className="w-5 h-5" /> Cadastre-se para ver o contato
+              <Lock className="w-5 h-5" /> Cadastre-se para ver contato e preço
             </Button>
           ) : (
             <>
