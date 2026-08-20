@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp, Ad } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Trash2, Pencil, PackageCheck, Share2, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Pencil, PackageCheck, Share2, Clock, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { DesktopShell } from '@/components/DesktopShell';
@@ -28,11 +28,25 @@ export default function MyAdsPage() {
   const [loading, setLoading] = useState(true);
   const [canSchedule, setCanSchedule] = useState(false);
   const [scheduleAd, setScheduleAd] = useState<Ad | null>(null);
+  const [scheduledAdIds, setScheduledAdIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     getUserAds().then(data => {
       setAds(data);
       setLoading(false);
+      if (data.length > 0) {
+        const adIds = data.map(ad => ad.id);
+        supabase
+          .from('ad_schedules')
+          .select('ad_id')
+          .in('ad_id', adIds)
+          .eq('active', true)
+          .then(({ data: schedules }) => {
+            if (schedules) {
+              setScheduledAdIds(new Set(schedules.map(s => s.ad_id)));
+            }
+          });
+      }
     });
     if (currentUser?.user_id) {
       supabase.rpc('has_feature', { _user_id: currentUser.user_id, _key: 'ad_scheduling' })
@@ -63,6 +77,11 @@ export default function MyAdsPage() {
     // doesn't get re-published automatically.
     if (!isSold) {
       await supabase.from('ad_schedules').update({ active: false }).eq('ad_id', id);
+      setScheduledAdIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
 
     setAds(prev => prev.map(ad =>
@@ -161,6 +180,12 @@ export default function MyAdsPage() {
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${st.class}`}>{st.label}</span>
+                      {scheduledAdIds.has(ad.id) && (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" title="Anúncio agendado">
+                          <CalendarCheck className="w-3 h-3" />
+                          Agendado
+                        </span>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {new Date(ad.created_at).toLocaleDateString('pt-BR')}
                       </span>
