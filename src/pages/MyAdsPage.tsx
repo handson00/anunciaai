@@ -77,6 +77,11 @@ export default function MyAdsPage() {
     // doesn't get re-published automatically.
     if (!isSold) {
       await supabase.from('ad_schedules').update({ active: false }).eq('ad_id', id);
+      setScheduledAdIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
 
     setAds(prev => prev.map(ad =>
