@@ -28,6 +28,7 @@ export default function MyAdsPage() {
   const [loading, setLoading] = useState(true);
   const [canSchedule, setCanSchedule] = useState(false);
   const [scheduleAd, setScheduleAd] = useState<Ad | null>(null);
+  const [scheduledAdIds, setScheduledAdIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     getUserAds().then(data => {
