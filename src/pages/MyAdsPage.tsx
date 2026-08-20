@@ -34,6 +34,19 @@ export default function MyAdsPage() {
     getUserAds().then(data => {
       setAds(data);
       setLoading(false);
+      if (data.length > 0) {
+        const adIds = data.map(ad => ad.id);
+        supabase
+          .from('ad_schedules')
+          .select('ad_id')
+          .in('ad_id', adIds)
+          .eq('active', true)
+          .then(({ data: schedules }) => {
+            if (schedules) {
+              setScheduledAdIds(new Set(schedules.map(s => s.ad_id)));
+            }
+          });
+      }
     });
     if (currentUser?.user_id) {
       supabase.rpc('has_feature', { _user_id: currentUser.user_id, _key: 'ad_scheduling' })
