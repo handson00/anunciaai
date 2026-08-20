@@ -180,6 +180,12 @@ export default function MyAdsPage() {
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${st.class}`}>{st.label}</span>
+                      {scheduledAdIds.has(ad.id) && (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" title="Anúncio agendado">
+                          <CalendarCheck className="w-3 h-3" />
+                          Agendado
+                        </span>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {new Date(ad.created_at).toLocaleDateString('pt-BR')}
                       </span>
