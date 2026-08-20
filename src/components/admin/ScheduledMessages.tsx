@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Trash2, Play, Pause, Plus, X, ChevronDown, ChevronUp, RefreshCw, CheckCircle2, AlertCircle, Upload, Loader2 } from 'lucide-react';
+import { Trash2, Play, Pause, Plus, X, ChevronDown, ChevronUp, RefreshCw, CheckCircle2, AlertCircle, Upload, Loader2, Pencil } from 'lucide-react';
 
 interface Group { id: string; name: string; }
 
@@ -50,6 +50,7 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
   const [items, setItems] = useState<Scheduled[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [logs, setLogs] = useState<Record<string, any[]>>({});
   const groupMap = Object.fromEntries(groups.map(g => [g.id, g.name]));
@@ -125,7 +126,30 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
     }
   };
 
+  const toLocalInput = (iso: string) => {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const startEdit = (it: Scheduled) => {
+    setEditingId(it.id);
+    setTitle(it.title || '');
+    setSelectedGroups(it.group_ids || []);
+    setMessageType(it.message_type);
+    setText(it.text || '');
+    setMediaUrl(it.media_url || '');
+    setFileName(it.file_name || '');
+    setPollOptions(Array.isArray(it.poll_options) && it.poll_options.length >= 2 ? it.poll_options : ['', '']);
+    setButtons(Array.isArray(it.buttons) && it.buttons.length ? it.buttons : [{ id: '1', label: '' }]);
+    setScheduledAt(toLocalInput(it.next_run_at || it.scheduled_at));
+    setRecurrence(it.recurrence);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const reset = () => {
+    setEditingId(null);
     setTitle(''); setSelectedGroups([]); setMessageType('text'); setText('');
     setMediaUrl(''); setFileName(''); setPollOptions(['', '']);
     setButtons([{ id: '1', label: '' }]);
@@ -154,12 +178,18 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
       next_run_at: new Date(scheduledAt).toISOString(),
       recurrence,
       status: 'pending',
-      created_by: (await supabase.auth.getUser()).data.user?.id,
+      last_error: null,
     };
-    const { error } = await supabase.from('scheduled_messages').insert(payload);
+    let error;
+    if (editingId) {
+      ({ error } = await supabase.from('scheduled_messages').update(payload).eq('id', editingId));
+    } else {
+      payload.created_by = (await supabase.auth.getUser()).data.user?.id;
+      ({ error } = await supabase.from('scheduled_messages').insert(payload));
+    }
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success('Agendamento criado');
+    toast.success(editingId ? 'Agendamento atualizado' : 'Agendamento criado');
     reset();
     setShowForm(false);
     load();
@@ -189,7 +219,7 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Button onClick={() => setShowForm(s => !s)} className="flex-1">
+        <Button onClick={() => { if (showForm) { reset(); setShowForm(false); } else { reset(); setShowForm(true); } }} className="flex-1">
           <Plus className="w-4 h-4 mr-1" /> Novo agendamento
         </Button>
         <Button variant="outline" onClick={runNow}>
@@ -202,6 +232,7 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
 
       {showForm && (
         <div className="border rounded-xl p-4 space-y-3 bg-card">
+          {editingId && <p className="text-sm font-semibold text-primary">Editando agendamento</p>}
           <Input placeholder="Título (opcional)" value={title} onChange={e => setTitle(e.target.value)} />
 
           <div>
@@ -306,7 +337,7 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={save} disabled={saving} className="flex-1">{saving ? 'Salvando...' : 'Agendar'}</Button>
+            <Button onClick={save} disabled={saving} className="flex-1">{saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Agendar'}</Button>
             <Button variant="outline" onClick={() => { reset(); setShowForm(false); }}>Cancelar</Button>
           </div>
         </div>
@@ -356,6 +387,9 @@ export function ScheduledMessages({ groups }: { groups: Group[] }) {
                   <Play className="w-3 h-3 mr-1" /> Reativar
                 </Button>
               )}
+              <Button size="sm" variant="outline" onClick={() => startEdit(it)}>
+                <Pencil className="w-3 h-3 mr-1" /> Editar
+              </Button>
               <Button size="sm" variant="outline" onClick={() => toggleExpand(it.id)}>
                 {expanded[it.id] ? <ChevronUp className="w-3 h-3 mr-1" /> : <ChevronDown className="w-3 h-3 mr-1" />}
                 Detalhes
